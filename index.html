@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CappellettoShop — Calendario Campagne Email</title>
+<link rel="icon" href="logo.png">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #fff; color: #1a1a1a; font-size: 14px; -webkit-font-smoothing: antialiased; }
+  button, input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
+  button { cursor: pointer; }
+
+  .sync-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 400; padding: 6px 16px; font-size: 11px; text-align: center; transition: all .3s; }
+  .sync-bar.connected { background: rgba(46,125,50,.08); color: #2E7D32; }
+  .sync-bar.syncing { background: rgba(21,101,192,.08); color: #1565C0; }
+  .sync-bar.error { background: rgba(198,40,40,.1); color: #C62828; }
+  .sync-bar.hidden { transform: translateY(-100%); opacity: 0; }
+
+  /* ── TOPBAR ─────────────────────────────── */
+  .topbar { background: #1a1a1a; color: #fff; }
+  .topbar-inner { max-width: 1200px; margin: 0 auto; padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+  .topbar-left { display: flex; align-items: center; gap: 14px; }
+  .topbar-logo { height: 26px; display: block; filter: brightness(0) invert(1); }
+  .topbar-title { display: flex; flex-direction: column; gap: 2px; }
+  .topbar-title h1 { font-size: 14px; font-weight: 600; letter-spacing: .04em; color: #fff; }
+  .topbar-title span { font-size: 11px; color: #888; letter-spacing: .02em; }
+  .btn-new { background: #2a2a2a; border: 1px solid #333; color: #fff; padding: 10px 18px; font-size: 13px; font-weight: 600; letter-spacing: .02em; display: flex; align-items: center; gap: 6px; transition: background .12s, border-color .12s; }
+  .btn-new:hover { background: #333; border-color: #444; }
+  .topbar-stats { max-width: 1200px; margin: 0 auto; padding: 0 32px 18px; display: flex; gap: 20px; flex-wrap: wrap; font-size: 12px; color: #888; }
+  .topbar-stats strong { color: #fff; font-weight: 700; }
+  .topbar-stats .sep { color: #444; }
+
+  /* ── TOOLBAR ────────────────────────────── */
+  .toolbar { position: sticky; top: 0; z-index: 100; background: #fff; border-bottom: 1px solid #e8e8e8; }
+  .toolbar-inner { max-width: 1200px; margin: 0 auto; padding: 16px 32px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .search-input { padding: 8px 12px; border: 1px solid #e8e8e8; background: #fff; color: #1a1a1a; outline: none; width: 200px; transition: border-color .12s; }
+  .search-input:focus { border-color: #1a1a1a; }
+  .search-input::placeholder { color: #aaa; }
+  .view-toggle { display: flex; border: 1px solid #e8e8e8; }
+  .btn-toggle { padding: 8px 14px; background: #fff; border: none; border-right: 1px solid #e8e8e8; font-size: 12px; font-weight: 500; color: #888; transition: background .12s, color .12s; }
+  .btn-toggle:last-child { border-right: none; }
+  .btn-toggle.active { background: #1a1a1a; color: #fff; }
+  .btn-toggle:not(.active):hover { color: #1a1a1a; background: #f8f8f8; }
+  .status-group { display: flex; gap: 4px; }
+  .btn-status { padding: 8px 12px; background: #fff; border: 1px solid #e8e8e8; font-size: 12px; font-weight: 500; color: #888; transition: border-color .12s, color .12s; }
+  .btn-status:hover { border-color: #1a1a1a; color: #1a1a1a; }
+  .btn-status.active { border-color: #1a1a1a; color: #1a1a1a; background: #f8f8f8; font-weight: 700; }
+  .type-pills { max-width: 1200px; margin: 0 auto; padding: 0 32px 14px; display: flex; gap: 16px; flex-wrap: wrap; }
+  .type-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; padding: 4px 0; border: none; background: none; color: #aaa; transition: color .12s; border-bottom: 2px solid transparent; }
+  .type-pill .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: #ccc; }
+  .type-pill.active { color: #1a1a1a; }
+  .type-pill.active .dot { background: var(--dot-color); }
+  .type-pill .count { color: #bbb; font-weight: 400; }
+  .type-pill:hover { color: #1a1a1a; }
+
+  /* ── CONTENT ────────────────────────────── */
+  .content { max-width: 1200px; margin: 0 auto; padding: 28px 32px 120px; }
+  .month-section { margin-bottom: 30px; }
+  .month-header { display: flex; align-items: baseline; gap: 10px; padding-bottom: 10px; margin-bottom: 12px; border-bottom: 1px solid #e8e8e8; }
+  .month-header h2 { font-size: 16px; font-weight: 700; color: #1a1a1a; letter-spacing: .01em; }
+  .month-header .count { font-size: 12px; color: #aaa; }
+  .month-empty { font-size: 12px; color: #ccc; font-style: italic; padding: 4px 2px 2px; }
+  .campaign-list { display: flex; flex-direction: column; gap: 4px; }
+  .campaign-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #fff; border: 1px solid #e8e8e8; border-left: 3px solid var(--type-color); cursor: pointer; width: 100%; text-align: left; transition: background .12s, border-color .12s; }
+  .campaign-row:hover { background: #f8f8f8; }
+  .campaign-row.selected { background: #f8f8f8; border-color: #1a1a1a; }
+  .campaign-row .day { font-size: 12px; color: #888; font-variant-numeric: tabular-nums; min-width: 46px; }
+  .campaign-row .type-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--type-color); min-width: 130px; }
+  .campaign-row .name { font-size: 13px; font-weight: 500; color: #1a1a1a; flex: 1; }
+  .campaign-row .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; background: var(--status-color); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .grid-card { border: 1px solid #e8e8e8; padding: 16px; min-height: 100px; }
+  .grid-card-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #e8e8e8; }
+  .grid-card-header .name { font-size: 13px; font-weight: 700; color: #1a1a1a; }
+  .grid-card-header .count { font-size: 11px; color: #aaa; }
+  .grid-empty { font-size: 11px; color: #ddd; text-align: center; padding: 16px 0; }
+  .grid-row { display: flex; align-items: center; gap: 8px; padding: 6px 4px; border-left: 2px solid var(--type-color); padding-left: 8px; width: 100%; text-align: left; background: none; border-top: none; border-right: none; border-bottom: none; transition: background .12s; }
+  .grid-row:hover { background: #f8f8f8; }
+  .grid-row .day { font-size: 11px; color: #aaa; font-variant-numeric: tabular-nums; min-width: 16px; }
+  .grid-row .name { font-size: 12px; color: #1a1a1a; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .grid-row .status-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; background: var(--status-color); }
+
+  /* ── LEGEND ─────────────────────────────── */
+  .legend { margin-top: 32px; padding-top: 20px; border-top: 1px solid #e8e8e8; }
+  .legend-title { font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 12px; }
+  .legend-items { display: flex; gap: 20px; flex-wrap: wrap; font-size: 12px; color: #888; }
+  .legend-item { display: flex; gap: 6px; align-items: center; }
+  .legend-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+
+  /* ── DETAIL PANEL ───────────────────────── */
+  .detail-panel { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 3px solid var(--type-color); box-shadow: 0 -8px 30px rgba(0,0,0,.12); z-index: 250; max-height: 42vh; overflow-y: auto; }
+  .detail-inner { max-width: 1200px; margin: 0 auto; padding: 22px 32px 26px; }
+  .detail-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 12px; }
+  .detail-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+  .detail-meta .type-tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--type-color); }
+  .detail-meta .status-tag { font-size: 11px; font-weight: 600; padding: 2px 8px; border: 1px solid var(--status-color); color: var(--status-color); }
+  .detail-title { font-size: 19px; font-weight: 700; color: #1a1a1a; }
+  .detail-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .btn-icon { background: #fff; border: 1px solid #e8e8e8; color: #888; padding: 7px 11px; font-size: 13px; transition: border-color .12s, color .12s; }
+  .btn-icon:hover { border-color: #1a1a1a; color: #1a1a1a; }
+  .btn-icon.danger:hover { border-color: #C62828; color: #C62828; }
+  .detail-date { font-size: 12px; color: #888; margin-bottom: 12px; }
+  .detail-date strong { color: #1a1a1a; font-weight: 600; }
+  .detail-notes { padding: 12px 14px; background: #f8f8f8; border: 1px solid #e8e8e8; font-size: 13px; color: #555; line-height: 1.5; white-space: pre-wrap; }
+  .detail-notes-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #aaa; display: block; margin-bottom: 6px; font-weight: 700; }
+
+  /* ── MODAL / OVERLAY ────────────────────── */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .modal { background: #fff; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; }
+  .modal-sm { max-width: 400px; }
+  .modal-header { padding: 22px 28px; border-bottom: 1px solid #e8e8e8; }
+  .modal-header h2 { font-size: 16px; font-weight: 700; color: #1a1a1a; }
+  .modal-body { padding: 22px 28px; }
+  .modal-footer { padding: 18px 28px; border-top: 1px solid #e8e8e8; display: flex; justify-content: flex-end; gap: 10px; }
+  .btn { padding: 9px 18px; font-size: 13px; font-weight: 600; border: 1px solid #e8e8e8; background: #fff; color: #1a1a1a; transition: border-color .12s; }
+  .btn:hover { border-color: #1a1a1a; }
+  .btn-primary { background: #1a1a1a; border-color: #1a1a1a; color: #fff; }
+  .btn-primary:hover { background: #333; border-color: #333; }
+  .btn-danger { background: #C62828; border-color: #C62828; color: #fff; }
+  .btn-danger:hover { background: #B71C1C; border-color: #B71C1C; }
+
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; display: block; }
+  .form-input, .form-select, .form-textarea { width: 100%; padding: 9px 11px; border: 1px solid #e8e8e8; background: #fff; color: #1a1a1a; outline: none; transition: border-color .12s; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: #1a1a1a; }
+  .form-input::placeholder, .form-textarea::placeholder { color: #bbb; }
+  .form-textarea { min-height: 72px; resize: vertical; }
+  .form-select { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23aaa'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+  .form-row { display: grid; gap: 12px; }
+  .form-row-2 { grid-template-columns: 1fr 1fr; }
+  .form-row-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  .preview-box { padding: 14px; background: #f8f8f8; border: 1px solid #e8e8e8; margin-bottom: 18px; }
+  .preview-label { font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
+  .preview-row { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #e8e8e8; border-left: 3px solid var(--type-color); padding: 9px 12px; }
+  .preview-row .day { font-size: 12px; color: #888; min-width: 44px; }
+  .preview-row .type-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--type-color); min-width: 120px; }
+  .preview-row .name { font-size: 13px; font-weight: 500; color: #1a1a1a; flex: 1; }
+  .preview-row .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--status-color); flex-shrink: 0; }
+
+  .loading-box, .empty-box { text-align: center; padding: 60px 20px; color: #aaa; font-size: 13px; }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid #eee; border-top-color: #888; border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: 10px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 700px) {
+    .topbar-inner { padding: 18px 20px 0; }
+    .topbar-stats { padding: 0 20px 16px; }
+    .toolbar-inner { padding: 14px 20px; }
+    .type-pills { padding: 0 20px 14px; }
+    .content { padding: 22px 20px 100px; }
+    .detail-inner { padding: 18px 20px 22px; }
+    .search-input { width: 100%; }
+    .form-row-2, .form-row-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo, useCallback, useRef } = React;
+
+/* ── CONFIG ─────────────────────────────────────────── */
+const SUPABASE_URL = "https://amcrfoghuurbnpmstzyk.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtY3Jmb2dodXVyYm5wbXN0enlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMzk3ODgsImV4cCI6MjEwMDcxNTc4OH0.BHgy5znAHlRIT__I1u2pOIkjZF-GlY0QGOJf7msOs3c";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const MONTHS = [
+  { n: 8, name: "Agosto" },
+  { n: 9, name: "Settembre" },
+  { n: 10, name: "Ottobre" },
+  { n: 11, name: "Novembre" },
+  { n: 12, name: "Dicembre" },
+];
+
+const TYPES = {
+  launch:     { label: "Lancio Prodotto",          color: "#C62828" },
+  promo:      { label: "Promozione / Sconto",      color: "#E65100" },
+  newsletter: { label: "Newsletter",                color: "#2E7D32" },
+  editorial:  { label: "Editoriale / Storytelling", color: "#6A4C93" },
+  event:      { label: "Evento / Fiera",            color: "#1565C0" },
+  automation: { label: "Automazione / Flow",        color: "#00838F" },
+};
+
+const STATUSES = {
+  confirmed: { label: "Confermato",   color: "#2E7D32" },
+  planned:   { label: "Pianificato",  color: "#1565C0" },
+  tbd:       { label: "TBD",          color: "#E65100" },
+};
+
+const emptyForm = () => ({
+  label: "", type: "newsletter", status: "tbd",
+  month: 8, day: 1, end_day: "", notes: "",
+});
+
+/* ── HELPERS ────────────────────────────────────────── */
+function typeOf(c) { return TYPES[c.type] || TYPES.newsletter; }
+function statusOf(c) { return STATUSES[c.status] || STATUSES.tbd; }
+
+/* ── APP ────────────────────────────────────────────── */
+function App() {
+  const [campaigns, setCampaigns] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [sync, setSync] = useState({ state: "hidden", message: "" });
+  const [view, setView] = useState("timeline");
+  const [search, setSearch] = useState("");
+  const [activeTypes, setActiveTypes] = useState(new Set(Object.keys(TYPES)));
+  const [activeStatus, setActiveStatus] = useState("all");
+  const [selectedId, setSelectedId] = useState(null);
+  const [modal, setModal] = useState(null);       // null | { mode:'create' } | { mode:'edit', campaign }
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
+  const showSync = (state, message) => setSync({ state, message });
+  const flashSync = (state, message) => { showSync(state, message); setTimeout(() => showSync("hidden", ""), 1800); };
+
+  const load = useCallback(async () => {
+    const { data, error } = await sb.from("campaigns").select("*").order("month").order("day");
+    setLoading(false);
+    if (error) { showSync("error", "Errore di connessione: " + error.message); return; }
+    setCampaigns(data || []);
+    showSync("connected", "Connesso — sincronizzazione in tempo reale");
+    setTimeout(() => showSync("hidden", ""), 2200);
+  }, []);
+
+  useEffect(() => {
+    load();
+    const channel = sb.channel("campaigns-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "campaigns" }, (payload) => {
+        if (payload.eventType === "INSERT") {
+          setCampaigns((prev) => prev.some((c) => c.id === payload.new.id) ? prev : [...prev, payload.new]);
+        } else if (payload.eventType === "UPDATE") {
+          setCampaigns((prev) => prev.map((c) => (c.id === payload.new.id ? payload.new : c)));
+        } else if (payload.eventType === "DELETE") {
+          setCampaigns((prev) => prev.filter((c) => c.id !== payload.old.id));
+          setSelectedId((sel) => (sel === payload.old.id ? null : sel));
+        }
+      })
+      .subscribe();
+    return () => sb.removeChannel(channel);
+  }, [load]);
+
+  async function createCampaign(data) {
+    showSync("syncing", "Salvataggio...");
+    const { data: row, error } = await sb.from("campaigns").insert([data]).select().single();
+    if (error) { flashSync("error", "Errore: " + error.message); return null; }
+    setCampaigns((prev) => prev.some((c) => c.id === row.id) ? prev : [...prev, row]);
+    flashSync("connected", "Campagna salvata");
+    return row;
+  }
+
+  async function updateCampaign(id, data) {
+    showSync("syncing", "Aggiornamento...");
+    const { data: row, error } = await sb.from("campaigns").update(data).eq("id", id).select().single();
+    if (error) { flashSync("error", "Errore: " + error.message); return null; }
+    setCampaigns((prev) => prev.map((c) => (c.id === id ? row : c)));
+    flashSync("connected", "Campagna aggiornata");
+    return row;
+  }
+
+  async function deleteCampaign(id) {
+    showSync("syncing", "Eliminazione...");
+    const { error } = await sb.from("campaigns").delete().eq("id", id);
+    if (error) { flashSync("error", "Errore: " + error.message); return; }
+    setCampaigns((prev) => prev.filter((c) => c.id !== id));
+    setSelectedId((sel) => (sel === id ? null : sel));
+    flashSync("connected", "Campagna eliminata");
+  }
+
+  async function duplicateCampaign(c) {
+    const { id, created_at, updated_at, ...rest } = c;
+    const row = await createCampaign({ ...rest, label: c.label + " (copia)" });
+    if (row) setSelectedId(row.id);
+  }
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return campaigns.filter((c) => {
+      if (!activeTypes.has(c.type)) return false;
+      if (activeStatus !== "all" && c.status !== activeStatus) return false;
+      if (q && !(c.label || "").toLowerCase().includes(q) && !(c.notes || "").toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [campaigns, activeTypes, activeStatus, search]);
+
+  const typeCounts = useMemo(() => {
+    const counts = {};
+    Object.keys(TYPES).forEach((t) => { counts[t] = campaigns.filter((c) => c.type === t).length; });
+    return counts;
+  }, [campaigns]);
+
+  const stats = useMemo(() => ({
+    total: campaigns.length,
+    confirmed: campaigns.filter((c) => c.status === "confirmed").length,
+    planned: campaigns.filter((c) => c.status === "planned").length,
+    tbd: campaigns.filter((c) => c.status === "tbd").length,
+  }), [campaigns]);
+
+  const selected = campaigns.find((c) => c.id === selectedId) || null;
+
+  function toggleType(t) {
+    setActiveTypes((prev) => {
+      const next = new Set(prev);
+      next.has(t) ? next.delete(t) : next.add(t);
+      return next;
+    });
+  }
+
+  function openCreate() { setModal({ mode: "create" }); setSelectedId(null); }
+  function openEdit(c) { setModal({ mode: "edit", campaign: c }); setSelectedId(null); }
+
+  async function handleSubmit(data, editId) {
+    if (editId) await updateCampaign(editId, data);
+    else { const row = await createCampaign(data); if (row) setSelectedId(row.id); }
+    setModal(null);
+  }
+
+  return (
+    <React.Fragment>
+      <div className={"sync-bar " + sync.state}>{sync.message}</div>
+
+      <TopBar stats={stats} onNew={openCreate} />
+
+      <Toolbar
+        view={view} setView={setView}
+        search={search} setSearch={setSearch}
+        activeStatus={activeStatus} setActiveStatus={setActiveStatus}
+        activeTypes={activeTypes} toggleType={toggleType}
+        typeCounts={typeCounts}
+      />
+
+      <div className="content">
+        {loading ? (
+          <div className="loading-box"><div className="spinner"></div><div>Caricamento campagne...</div></div>
+        ) : view === "timeline" ? (
+          <TimelineView campaigns={filtered} selectedId={selectedId} onSelect={setSelectedId} />
+        ) : (
+          <GridView campaigns={filtered} selectedId={selectedId} onSelect={setSelectedId} />
+        )}
+        <Legend />
+      </div>
+
+      {selected && !modal && (
+        <DetailPanel
+          campaign={selected}
+          onClose={() => setSelectedId(null)}
+          onEdit={() => openEdit(selected)}
+          onDuplicate={() => duplicateCampaign(selected)}
+          onDelete={() => setDeleteTarget(selected)}
+        />
+      )}
+
+      {modal && (
+        <CampaignModal
+          initial={modal.mode === "edit" ? modal.campaign : emptyForm()}
+          editId={modal.mode === "edit" ? modal.campaign.id : null}
+          onCancel={() => setModal(null)}
+          onSubmit={handleSubmit}
+        />
+      )}
+
+      {deleteTarget && (
+        <ConfirmDeleteModal
+          campaign={deleteTarget}
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={async () => { await deleteCampaign(deleteTarget.id); setDeleteTarget(null); }}
+        />
+      )}
+    </React.Fragment>
+  );
+}
+
+/* ── TOPBAR ─────────────────────────────────────────── */
+function TopBar({ stats, onNew }) {
+  return (
+    <div className="topbar">
+      <div className="topbar-inner">
+        <div className="topbar-left">
+          <img src="logo.png" alt="CappellettoShop" className="topbar-logo" />
+          <div className="topbar-title">
+            <h1>Calendario Campagne Email</h1>
+            <span>Agosto – Dicembre 2026</span>
+          </div>
+        </div>
+        <button className="btn-new" onClick={onNew}>
+          <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> Nuova Campagna
+        </button>
+      </div>
+      <div className="topbar-stats">
+        <span><strong>{stats.total}</strong> campagne totali</span>
+        <span className="sep">|</span>
+        <span><strong style={{ color: STATUSES.confirmed.color }}>{stats.confirmed}</strong> confermate</span>
+        <span className="sep">|</span>
+        <span><strong style={{ color: STATUSES.planned.color }}>{stats.planned}</strong> pianificate</span>
+        <span className="sep">|</span>
+        <span><strong style={{ color: STATUSES.tbd.color }}>{stats.tbd}</strong> da confermare</span>
+      </div>
+    </div>
+  );
+}
+
+/* ── TOOLBAR ────────────────────────────────────────── */
+function Toolbar({ view, setView, search, setSearch, activeStatus, setActiveStatus, activeTypes, toggleType, typeCounts }) {
+  return (
+    <div className="toolbar">
+      <div className="toolbar-inner">
+        <input
+          className="search-input"
+          placeholder="Cerca campagna..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <div className="view-toggle">
+          <button className={"btn-toggle" + (view === "timeline" ? " active" : "")} onClick={() => setView("timeline")}>Timeline</button>
+          <button className={"btn-toggle" + (view === "grid" ? " active" : "")} onClick={() => setView("grid")}>Griglia</button>
+        </div>
+        <div className="status-group">
+          {["all", "confirmed", "planned", "tbd"].map((s) => (
+            <button
+              key={s}
+              className={"btn-status" + (activeStatus === s ? " active" : "")}
+              onClick={() => setActiveStatus(s)}
+            >
+              {s === "all" ? "Tutti" : STATUSES[s].label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="type-pills">
+        {Object.entries(TYPES).map(([key, cfg]) => (
+          <button
+            key={key}
+            className={"type-pill" + (activeTypes.has(key) ? " active" : "")}
+            style={{ "--dot-color": cfg.color }}
+            onClick={() => toggleType(key)}
+          >
+            <span className="dot"></span>
+            {cfg.label}
+            <span className="count">({typeCounts[key] || 0})</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── TIMELINE VIEW ──────────────────────────────────── */
+function TimelineView({ campaigns, selectedId, onSelect }) {
+  return (
+    <React.Fragment>
+      {MONTHS.map((m) => {
+        const items = campaigns.filter((c) => c.month === m.n).sort((a, b) => a.day - b.day);
+        return (
+          <div className="month-section" key={m.n}>
+            <div className="month-header">
+              <h2>{m.name}</h2>
+              <span className="count">{items.length} campagn{items.length === 1 ? "a" : "e"}</span>
+            </div>
+            {items.length === 0 ? (
+              <div className="month-empty">Nessuna campagna pianificata</div>
+            ) : (
+              <div className="campaign-list">
+                {items.map((c) => {
+                  const tc = typeOf(c), sc = statusOf(c);
+                  return (
+                    <button
+                      key={c.id}
+                      className={"campaign-row" + (selectedId === c.id ? " selected" : "")}
+                      style={{ "--type-color": tc.color, "--status-color": sc.color }}
+                      onClick={() => onSelect(selectedId === c.id ? null : c.id)}
+                    >
+                      <span className="day">{String(c.day).padStart(2, "0")}{c.end_day ? "–" + String(c.end_day).padStart(2, "0") : ""}</span>
+                      <span className="type-label">{tc.label}</span>
+                      <span className="name">{c.label}</span>
+                      <span className="status-dot"></span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </React.Fragment>
+  );
+}
+
+/* ── GRID VIEW ──────────────────────────────────────── */
+function GridView({ campaigns, selectedId, onSelect }) {
+  return (
+    <div className="grid">
+      {MONTHS.map((m) => {
+        const items = campaigns.filter((c) => c.month === m.n).sort((a, b) => a.day - b.day);
+        return (
+          <div className="grid-card" key={m.n}>
+            <div className="grid-card-header">
+              <span className="name">{m.name}</span>
+              <span className="count">{items.length}</span>
+            </div>
+            {items.length === 0 ? (
+              <div className="grid-empty">—</div>
+            ) : (
+              items.map((c) => {
+                const tc = typeOf(c), sc = statusOf(c);
+                return (
+                  <button
+                    key={c.id}
+                    className="grid-row"
+                    style={{ "--type-color": tc.color, "--status-color": sc.color, background: selectedId === c.id ? "#f8f8f8" : "none" }}
+                    onClick={() => onSelect(selectedId === c.id ? null : c.id)}
+                  >
+                    <span className="day">{c.day}</span>
+                    <span className="name">{c.label}</span>
+                    <span className="status-dot"></span>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── LEGEND ─────────────────────────────────────────── */
+function Legend() {
+  return (
+    <div className="legend">
+      <div className="legend-title">Legenda stati</div>
+      <div className="legend-items">
+        {Object.entries(STATUSES).map(([key, cfg]) => (
+          <div className="legend-item" key={key}>
+            <span className="legend-dot" style={{ background: cfg.color }}></span>
+            {cfg.label}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── DETAIL PANEL ───────────────────────────────────── */
+function DetailPanel({ campaign, onClose, onEdit, onDuplicate, onDelete }) {
+  const tc = typeOf(campaign), sc = statusOf(campaign);
+  const month = MONTHS.find((m) => m.n === campaign.month);
+  return (
+    <div className="detail-panel" style={{ "--type-color": tc.color }}>
+      <div className="detail-inner">
+        <div className="detail-top">
+          <div>
+            <div className="detail-meta">
+              <span className="type-tag" style={{ "--type-color": tc.color }}>{tc.label}</span>
+              <span className="status-tag" style={{ "--status-color": sc.color }}>{sc.label}</span>
+            </div>
+            <div className="detail-title">{campaign.label}</div>
+          </div>
+          <div className="detail-actions">
+            <button className="btn-icon" onClick={onEdit} title="Modifica">✎ Modifica</button>
+            <button className="btn-icon" onClick={onDuplicate} title="Duplica">⧉ Duplica</button>
+            <button className="btn-icon danger" onClick={onDelete} title="Elimina">✕ Elimina</button>
+            <button className="btn-icon" onClick={onClose} title="Chiudi">↓</button>
+          </div>
+        </div>
+        <div className="detail-date">
+          Data: <strong>{campaign.day}{campaign.end_day ? "–" + campaign.end_day : ""} {month ? month.name : ""} 2026</strong>
+        </div>
+        {campaign.notes && (
+          <div className="detail-notes">
+            <span className="detail-notes-label">Descrizione / Note</span>
+            {campaign.notes}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── CAMPAIGN MODAL (create / edit) ─────────────────── */
+function CampaignModal({ initial, editId, onCancel, onSubmit }) {
+  const [form, setForm] = useState({
+    label: initial.label || "",
+    type: initial.type || "newsletter",
+    status: initial.status || "tbd",
+    month: initial.month || 8,
+    day: initial.day || 1,
+    end_day: initial.end_day || "",
+    notes: initial.notes || "",
+  });
+
+  function set(field, value) { setForm((prev) => ({ ...prev, [field]: value })); }
+
+  function submit(e) {
+    e.preventDefault();
+    if (!form.label.trim()) return;
+    onSubmit({
+      label: form.label.trim(),
+      type: form.type,
+      status: form.status,
+      month: parseInt(form.month, 10),
+      day: parseInt(form.day, 10) || 1,
+      end_day: form.end_day ? parseInt(form.end_day, 10) : null,
+      notes: form.notes.trim(),
+    }, editId);
+  }
+
+  const tc = TYPES[form.type], sc = STATUSES[form.status];
+
+  return (
+    <div className="overlay" onClick={onCancel}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>{editId ? "Modifica Campagna" : "Nuova Campagna"}</h2>
+        </div>
+        <form onSubmit={submit}>
+          <div className="modal-body">
+            <div className="preview-box">
+              <div className="preview-label">Anteprima</div>
+              <div className="preview-row" style={{ "--type-color": tc.color }}>
+                <span className="day">{String(form.day || 1).padStart(2, "0")}{form.end_day ? "–" + String(form.end_day).padStart(2, "0") : ""}</span>
+                <span className="type-label">{tc.label}</span>
+                <span className="name">{form.label || "Nome campagna"}</span>
+                <span className="status-dot" style={{ "--status-color": sc.color }}></span>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Nome campagna *</label>
+              <input className="form-input" value={form.label} onChange={(e) => set("label", e.target.value)} placeholder="es. Lancio Collezione Autunno" autoFocus />
+            </div>
+
+            <div className="form-group form-row form-row-2">
+              <div>
+                <label className="form-label">Tipo</label>
+                <select className="form-select" value={form.type} onChange={(e) => set("type", e.target.value)}>
+                  {Object.entries(TYPES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="form-label">Stato</label>
+                <select className="form-select" value={form.status} onChange={(e) => set("status", e.target.value)}>
+                  {Object.entries(STATUSES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className="form-group form-row form-row-3">
+              <div>
+                <label className="form-label">Mese</label>
+                <select className="form-select" value={form.month} onChange={(e) => set("month", e.target.value)}>
+                  {MONTHS.map((m) => <option key={m.n} value={m.n}>{m.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="form-label">Giorno</label>
+                <input className="form-input" type="number" min="1" max="31" value={form.day} onChange={(e) => set("day", e.target.value)} />
+              </div>
+              <div>
+                <label className="form-label">Fine (opz.)</label>
+                <input className="form-input" type="number" min="1" max="31" value={form.end_day} onChange={(e) => set("end_day", e.target.value)} placeholder="—" />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Descrizione / Note</label>
+              <textarea className="form-textarea" value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Dettagli, obiettivi, coordinamento..."></textarea>
+            </div>
+          </div>
+          <div className="modal-footer">
+            <button type="button" className="btn" onClick={onCancel}>Annulla</button>
+            <button type="submit" className="btn btn-primary">{editId ? "Salva Modifiche" : "Aggiungi Campagna"}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ── DELETE CONFIRM MODAL ───────────────────────────── */
+function ConfirmDeleteModal({ campaign, onCancel, onConfirm }) {
+  return (
+    <div className="overlay" onClick={onCancel}>
+      <div className="modal modal-sm" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Eliminare "{campaign.label}"?</h2>
+        </div>
+        <div className="modal-body">
+          <p style={{ fontSize: 13, color: "#888" }}>Questa azione non può essere annullata.</p>
+        </div>
+        <div className="modal-footer">
+          <button className="btn" onClick={onCancel}>Annulla</button>
+          <button className="btn btn-danger" onClick={onConfirm}>Elimina</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
