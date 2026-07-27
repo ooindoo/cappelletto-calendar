@@ -50,13 +50,15 @@
   .btn-status { padding: 8px 12px; background: #fff; border: 1px solid #e8e8e8; font-size: 12px; font-weight: 500; color: #888; transition: border-color .12s, color .12s; }
   .btn-status:hover { border-color: #1a1a1a; color: #1a1a1a; }
   .btn-status.active { border-color: #1a1a1a; color: #1a1a1a; background: #f8f8f8; font-weight: 700; }
-  .type-pills { max-width: 1200px; margin: 0 auto; padding: 0 32px 14px; display: flex; gap: 16px; flex-wrap: wrap; }
-  .type-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; padding: 4px 0; border: none; background: none; color: #aaa; transition: color .12s; border-bottom: 2px solid transparent; }
-  .type-pill .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: #ccc; }
-  .type-pill.active { color: #1a1a1a; }
-  .type-pill.active .dot { background: var(--dot-color); }
+  .type-pills { max-width: 1200px; margin: 0 auto; padding: 0 32px 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .type-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; padding: 6px 12px; border: 1px solid #e8e8e8; background: #fff; color: #888; transition: border-color .12s, color .12s, background .12s; }
+  .type-pill.active { border-color: #1a1a1a; color: #1a1a1a; background: #f8f8f8; font-weight: 700; }
   .type-pill .count { color: #bbb; font-weight: 400; }
-  .type-pill:hover { color: #1a1a1a; }
+  .type-pill.active .count { color: #999; }
+  .type-pill:hover { border-color: #1a1a1a; color: #1a1a1a; }
+
+  /* Neutral type badge — color is reserved for status only */
+  .type-badge { display: inline-block; min-width: 140px; box-sizing: border-box; text-align: center; border: 1px solid #ddd; border-radius: 20px; padding: 2px 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #777; white-space: nowrap; background: #fff; }
 
   /* ── CONTENT ────────────────────────────── */
   .content { max-width: 1200px; margin: 0 auto; padding: 28px 32px 120px; }
@@ -66,40 +68,40 @@
   .month-header .count { font-size: 12px; color: #aaa; }
   .month-empty { font-size: 12px; color: #ccc; font-style: italic; padding: 4px 2px 2px; }
   .campaign-list { display: flex; flex-direction: column; gap: 4px; }
-  .campaign-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #fff; border: 1px solid #e8e8e8; border-left: 3px solid var(--type-color); cursor: pointer; width: 100%; text-align: left; transition: background .12s, border-color .12s; }
+  .campaign-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #fff; border: 1px solid #e8e8e8; border-left: 3px solid #ccc; cursor: pointer; width: 100%; text-align: left; transition: background .12s, border-color .12s; box-sizing: border-box; }
   .campaign-row:hover { background: #f8f8f8; }
   .campaign-row.selected { background: #f8f8f8; border-color: #1a1a1a; }
   .campaign-row .day { font-size: 12px; color: #888; font-variant-numeric: tabular-nums; min-width: 46px; }
-  .campaign-row .type-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--type-color); min-width: 130px; }
   .campaign-row .name { font-size: 13px; font-weight: 500; color: #1a1a1a; flex: 1; }
-  .campaign-row .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; background: var(--status-color); }
+  .campaign-row .status-dot { width: 6px; height: 6px; flex-shrink: 0; }
+
+  .status-dot { border-radius: 50%; border: 1.5px solid transparent; box-sizing: border-box; }
 
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
   .grid-card { border: 1px solid #e8e8e8; padding: 16px; min-height: 100px; }
   .grid-card-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #e8e8e8; }
   .grid-card-header .name { font-size: 13px; font-weight: 700; color: #1a1a1a; }
   .grid-card-header .count { font-size: 11px; color: #aaa; }
-  .grid-empty { font-size: 11px; color: #ddd; text-align: center; padding: 16px 0; }
-  .grid-row { display: flex; align-items: center; gap: 8px; padding: 6px 4px; border-left: 2px solid var(--type-color); padding-left: 8px; width: 100%; text-align: left; background: none; border-top: none; border-right: none; border-bottom: none; transition: background .12s; }
+  .grid-empty { font-size: 11px; color: #bbb; font-style: italic; text-align: center; padding: 16px 0; }
+  .grid-row { display: flex; align-items: center; gap: 8px; padding: 6px 4px; border-left: 2px solid #ccc; padding-left: 8px; width: 100%; text-align: left; background: none; border-top: none; border-right: none; border-bottom: none; transition: background .12s; box-sizing: border-box; }
   .grid-row:hover { background: #f8f8f8; }
   .grid-row .day { font-size: 11px; color: #aaa; font-variant-numeric: tabular-nums; min-width: 16px; }
   .grid-row .name { font-size: 12px; color: #1a1a1a; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .grid-row .status-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; background: var(--status-color); }
+  .grid-row .status-dot { width: 5px; height: 5px; flex-shrink: 0; }
 
   /* ── LEGEND ─────────────────────────────── */
   .legend { margin-top: 32px; padding-top: 20px; border-top: 1px solid #e8e8e8; }
   .legend-title { font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 12px; }
   .legend-items { display: flex; gap: 20px; flex-wrap: wrap; font-size: 12px; color: #888; }
   .legend-item { display: flex; gap: 6px; align-items: center; }
-  .legend-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+  .legend-dot { width: 7px; height: 7px; display: inline-block; border-radius: 50%; border: 1.5px solid transparent; box-sizing: border-box; }
 
   /* ── DETAIL PANEL ───────────────────────── */
-  .detail-panel { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 3px solid var(--type-color); box-shadow: 0 -8px 30px rgba(0,0,0,.12); z-index: 250; max-height: 42vh; overflow-y: auto; }
+  .detail-panel { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 3px solid #ccc; box-shadow: 0 -8px 30px rgba(0,0,0,.12); z-index: 250; max-height: 42vh; overflow-y: auto; }
   .detail-inner { max-width: 1200px; margin: 0 auto; padding: 22px 32px 26px; }
   .detail-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 12px; }
   .detail-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
-  .detail-meta .type-tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--type-color); }
-  .detail-meta .status-tag { font-size: 11px; font-weight: 600; padding: 2px 8px; border: 1px solid var(--status-color); color: var(--status-color); }
+  .detail-meta .status-tag { font-size: 11px; font-weight: 600; padding: 2px 8px; border: 1px solid var(--status-color); color: var(--status-color); border-radius: 20px; }
   .detail-title { font-size: 19px; font-weight: 700; color: #1a1a1a; }
   .detail-actions { display: flex; gap: 6px; flex-shrink: 0; }
   .btn-icon { background: #fff; border: 1px solid #e8e8e8; color: #888; padding: 7px 11px; font-size: 13px; transition: border-color .12s, color .12s; }
@@ -138,11 +140,10 @@
 
   .preview-box { padding: 14px; background: #f8f8f8; border: 1px solid #e8e8e8; margin-bottom: 18px; }
   .preview-label { font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
-  .preview-row { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #e8e8e8; border-left: 3px solid var(--type-color); padding: 9px 12px; }
+  .preview-row { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #e8e8e8; border-left: 3px solid #ccc; padding: 9px 12px; box-sizing: border-box; }
   .preview-row .day { font-size: 12px; color: #888; min-width: 44px; }
-  .preview-row .type-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--type-color); min-width: 120px; }
   .preview-row .name { font-size: 13px; font-weight: 500; color: #1a1a1a; flex: 1; }
-  .preview-row .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--status-color); flex-shrink: 0; }
+  .preview-row .status-dot { width: 6px; height: 6px; flex-shrink: 0; }
 
   .loading-box, .empty-box { text-align: center; padding: 60px 20px; color: #aaa; font-size: 13px; }
   .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid #eee; border-top-color: #888; border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: 10px; }
@@ -180,12 +181,12 @@ const MONTHS = [
 ];
 
 const TYPES = {
-  launch:     { label: "Lancio Prodotto",          color: "#C62828" },
-  promo:      { label: "Promozione / Sconto",      color: "#E65100" },
-  newsletter: { label: "Newsletter",                color: "#2E7D32" },
-  editorial:  { label: "Editoriale / Storytelling", color: "#6A4C93" },
-  event:      { label: "Evento / Fiera",            color: "#1565C0" },
-  automation: { label: "Automazione / Flow",        color: "#00838F" },
+  launch:     { label: "Lancio Prodotto" },
+  promo:      { label: "Promozione / Sconto" },
+  newsletter: { label: "Newsletter" },
+  editorial:  { label: "Editoriale / Storytelling" },
+  event:      { label: "Evento / Fiera" },
+  automation: { label: "Automazione / Flow" },
 };
 
 const STATUSES = {
@@ -202,6 +203,24 @@ const emptyForm = () => ({
 /* ── HELPERS ────────────────────────────────────────── */
 function typeOf(c) { return TYPES[c.type] || TYPES.newsletter; }
 function statusOf(c) { return STATUSES[c.status] || STATUSES.tbd; }
+
+// Color is reserved exclusively for status. "planned" renders as a
+// dashed outline instead of a solid fill so it reads at a glance
+// without relying on color alone.
+function statusDotStyle(status) {
+  const cfg = STATUSES[status] || STATUSES.tbd;
+  return status === "planned"
+    ? { background: "#fff", borderColor: cfg.color }
+    : { background: cfg.color, borderColor: cfg.color };
+}
+function statusBorderLeft(status) {
+  const cfg = STATUSES[status] || STATUSES.tbd;
+  return { borderLeftColor: cfg.color, borderLeftStyle: status === "planned" ? "dashed" : "solid" };
+}
+function statusBorderTop(status) {
+  const cfg = STATUSES[status] || STATUSES.tbd;
+  return { borderTopColor: cfg.color, borderTopStyle: status === "planned" ? "dashed" : "solid" };
+}
 
 /* ── APP ────────────────────────────────────────────── */
 function App() {
@@ -436,10 +455,8 @@ function Toolbar({ view, setView, search, setSearch, activeStatus, setActiveStat
           <button
             key={key}
             className={"type-pill" + (activeTypes.has(key) ? " active" : "")}
-            style={{ "--dot-color": cfg.color }}
             onClick={() => toggleType(key)}
           >
-            <span className="dot"></span>
             {cfg.label}
             <span className="count">({typeCounts[key] || 0})</span>
           </button>
@@ -466,18 +483,18 @@ function TimelineView({ campaigns, selectedId, onSelect }) {
             ) : (
               <div className="campaign-list">
                 {items.map((c) => {
-                  const tc = typeOf(c), sc = statusOf(c);
+                  const tc = typeOf(c);
                   return (
                     <button
                       key={c.id}
                       className={"campaign-row" + (selectedId === c.id ? " selected" : "")}
-                      style={{ "--type-color": tc.color, "--status-color": sc.color }}
+                      style={statusBorderLeft(c.status)}
                       onClick={() => onSelect(selectedId === c.id ? null : c.id)}
                     >
                       <span className="day">{String(c.day).padStart(2, "0")}{c.end_day ? "–" + String(c.end_day).padStart(2, "0") : ""}</span>
-                      <span className="type-label">{tc.label}</span>
+                      <span className="type-badge">{tc.label}</span>
                       <span className="name">{c.label}</span>
-                      <span className="status-dot"></span>
+                      <span className="status-dot" style={statusDotStyle(c.status)}></span>
                     </button>
                   );
                 })}
@@ -503,20 +520,19 @@ function GridView({ campaigns, selectedId, onSelect }) {
               <span className="count">{items.length}</span>
             </div>
             {items.length === 0 ? (
-              <div className="grid-empty">—</div>
+              <div className="grid-empty">Nessuna campagna</div>
             ) : (
               items.map((c) => {
-                const tc = typeOf(c), sc = statusOf(c);
                 return (
                   <button
                     key={c.id}
                     className="grid-row"
-                    style={{ "--type-color": tc.color, "--status-color": sc.color, background: selectedId === c.id ? "#f8f8f8" : "none" }}
+                    style={{ ...statusBorderLeft(c.status), background: selectedId === c.id ? "#f8f8f8" : "none" }}
                     onClick={() => onSelect(selectedId === c.id ? null : c.id)}
                   >
                     <span className="day">{c.day}</span>
                     <span className="name">{c.label}</span>
-                    <span className="status-dot"></span>
+                    <span className="status-dot" style={statusDotStyle(c.status)}></span>
                   </button>
                 );
               })
@@ -536,7 +552,7 @@ function Legend() {
       <div className="legend-items">
         {Object.entries(STATUSES).map(([key, cfg]) => (
           <div className="legend-item" key={key}>
-            <span className="legend-dot" style={{ background: cfg.color }}></span>
+            <span className="legend-dot" style={statusDotStyle(key)}></span>
             {cfg.label}
           </div>
         ))}
@@ -550,13 +566,18 @@ function DetailPanel({ campaign, onClose, onEdit, onDuplicate, onDelete }) {
   const tc = typeOf(campaign), sc = statusOf(campaign);
   const month = MONTHS.find((m) => m.n === campaign.month);
   return (
-    <div className="detail-panel" style={{ "--type-color": tc.color }}>
+    <div className="detail-panel" style={statusBorderTop(campaign.status)}>
       <div className="detail-inner">
         <div className="detail-top">
           <div>
             <div className="detail-meta">
-              <span className="type-tag" style={{ "--type-color": tc.color }}>{tc.label}</span>
-              <span className="status-tag" style={{ "--status-color": sc.color }}>{sc.label}</span>
+              <span className="type-badge">{tc.label}</span>
+              <span
+                className="status-tag"
+                style={{ "--status-color": sc.color, borderStyle: campaign.status === "planned" ? "dashed" : "solid" }}
+              >
+                {sc.label}
+              </span>
             </div>
             <div className="detail-title">{campaign.label}</div>
           </div>
@@ -621,11 +642,11 @@ function CampaignModal({ initial, editId, onCancel, onSubmit }) {
           <div className="modal-body">
             <div className="preview-box">
               <div className="preview-label">Anteprima</div>
-              <div className="preview-row" style={{ "--type-color": tc.color }}>
+              <div className="preview-row" style={statusBorderLeft(form.status)}>
                 <span className="day">{String(form.day || 1).padStart(2, "0")}{form.end_day ? "–" + String(form.end_day).padStart(2, "0") : ""}</span>
-                <span className="type-label">{tc.label}</span>
+                <span className="type-badge">{tc.label}</span>
                 <span className="name">{form.label || "Nome campagna"}</span>
-                <span className="status-dot" style={{ "--status-color": sc.color }}></span>
+                <span className="status-dot" style={statusDotStyle(form.status)}></span>
               </div>
             </div>
 
