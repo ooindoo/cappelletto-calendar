@@ -199,16 +199,34 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   @media (max-width: 700px) {
-    .topbar-inner { padding: 16px 16px 0; }
+    .topbar-inner { padding: 16px 16px 14px; row-gap: 14px; }
     .btn-new { min-height: 44px; }
     .topbar-stats { padding: 0 16px 14px; gap: 6px 14px; }
     .topbar-stats .sep { display: none; }
     .toolbar-inner { padding: 12px 16px; }
     .search-input { width: 100%; min-height: 44px; }
-    .btn-toggle, .btn-status { min-height: 44px; }
-    .status-group { flex-wrap: wrap; }
-    .type-pills { padding: 0 16px 12px; }
-    .type-pill { min-height: 40px; }
+    .btn-toggle { min-height: 44px; }
+
+    /* Status + type filters: compact pill strips that scroll
+       horizontally instead of wrapping into several rows of
+       full-width buttons — this is what was eating vertical space
+       before any campaign card was visible. */
+    .status-group {
+      flex-basis: 100%; flex-wrap: nowrap; overflow-x: auto;
+      -webkit-overflow-scrolling: touch; scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .status-group::-webkit-scrollbar { display: none; }
+    .btn-status { flex: 0 0 auto; white-space: nowrap; min-height: 36px; }
+
+    .type-pills {
+      padding: 0 16px 12px; flex-wrap: nowrap; overflow-x: auto;
+      -webkit-overflow-scrolling: touch; scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .type-pills::-webkit-scrollbar { display: none; }
+    .type-pill { flex: 0 0 auto; white-space: nowrap; min-height: 36px; }
+
     .content { padding: 20px 16px 100px; }
 
     /* Rows: keep day/badge/status on one compact line, let the name
