@@ -133,6 +133,7 @@
   .gallery-icon-btn.danger:hover { background: #C62828; }
   .gallery-label-input { width: 96px; box-sizing: border-box; margin-top: 4px; font-size: 11px; padding: 3px 5px; border: 1px solid transparent; background: transparent; color: #666; text-align: center; outline: none; }
   .gallery-label-input:hover, .gallery-label-input:focus { border-color: #e8e8e8; background: #fff; }
+  .gallery-label-view { width: 96px; box-sizing: border-box; margin-top: 4px; font-size: 11px; padding: 3px 5px; color: #666; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   .links-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
   .link-item { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid #e8e8e8; }
@@ -198,14 +199,46 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   @media (max-width: 700px) {
-    .topbar-inner { padding: 18px 20px 0; }
-    .topbar-stats { padding: 0 20px 16px; }
-    .toolbar-inner { padding: 14px 20px; }
-    .type-pills { padding: 0 20px 14px; }
-    .content { padding: 22px 20px 100px; }
-    .detail-inner { padding: 18px 20px 22px; }
-    .search-input { width: 100%; }
+    .topbar-inner { padding: 16px 16px 0; }
+    .btn-new { min-height: 44px; }
+    .topbar-stats { padding: 0 16px 14px; gap: 6px 14px; }
+    .topbar-stats .sep { display: none; }
+    .toolbar-inner { padding: 12px 16px; }
+    .search-input { width: 100%; min-height: 44px; }
+    .btn-toggle, .btn-status { min-height: 44px; }
+    .status-group { flex-wrap: wrap; }
+    .type-pills { padding: 0 16px 12px; }
+    .type-pill { min-height: 40px; }
+    .content { padding: 20px 16px 100px; }
+
+    /* Rows: keep day/badge/status on one compact line, let the name
+       wrap on its own full-width line instead of overflowing. */
+    .campaign-row, .preview-row { flex-wrap: wrap; row-gap: 6px; }
+    .campaign-row .status-dot, .preview-row .status-dot { order: 4; }
+    .campaign-row .name, .preview-row .name { order: 5; flex-basis: 100%; min-width: 0; }
+
+    .detail-inner { padding: 16px 16px 20px; }
+    .detail-top { flex-direction: column; align-items: stretch; gap: 12px; }
+    .detail-title { font-size: 17px; }
+    .detail-actions { flex-wrap: wrap; }
+    .btn-icon { flex: 1 1 auto; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+
+    .modal-header, .modal-body, .modal-footer { padding-left: 18px; padding-right: 18px; }
+    .form-input, .form-select, .form-textarea { min-height: 44px; }
+    .form-textarea { min-height: 80px; }
+    .btn, .btn-primary, .btn-danger { min-height: 44px; }
     .form-row-2, .form-row-3 { grid-template-columns: 1fr; }
+
+    .upload-btn { min-height: 40px; padding: 8px 12px; }
+    .gallery-icon-btn { width: 32px; height: 32px; font-size: 13px; }
+    .link-remove { min-width: 36px; min-height: 36px; }
+    .link-add-row { flex-direction: column; }
+    .link-add-row .link-label-input, .link-add-row .link-url-input { flex: 1 1 auto; width: 100%; min-height: 44px; }
+    .link-add-btn { width: 100%; min-height: 44px; }
+    .link-item { flex-wrap: wrap; }
+
+    .lightbox-close { width: 40px; height: 40px; }
+    .lightbox-caption { flex-wrap: wrap; justify-content: center; text-align: center; }
   }
 </style>
 </head>
@@ -596,11 +629,6 @@ function App() {
           images={imagesByCampaign[selected.id] || []}
           links={linksByCampaign[selected.id] || []}
           getImageUrl={imagePublicUrl}
-          onUploadImages={(files) => uploadImages(selected.id, files.map((f) => ({ file: f, label: "" })))}
-          onUpdateImageLabel={updateImageLabel}
-          onDeleteImage={deleteImage}
-          onAddLink={(label, url) => addLink(selected.id, label, url)}
-          onDeleteLink={deleteLink}
           onClose={() => setSelectedId(null)}
           onEdit={() => openEdit(selected)}
           onDuplicate={() => duplicateCampaign(selected)}
@@ -807,29 +835,15 @@ function Legend() {
   );
 }
 
-/* ── DETAIL PANEL ───────────────────────────────────── */
+/* ── DETAIL PANEL (read-only for images/links — editing lives in the
+   "Modifica Campagna" modal, consistent with every other field) ── */
 function DetailPanel({
   campaign, images, links, getImageUrl,
-  onUploadImages, onUpdateImageLabel, onDeleteImage,
-  onAddLink, onDeleteLink,
   onClose, onEdit, onDuplicate, onDelete,
 }) {
   const tc = typeOf(campaign), sc = statusOf(campaign);
   const month = MONTHS.find((m) => m.n === campaign.month);
   const [lightbox, setLightbox] = useState(null);
-  const [linkForm, setLinkForm] = useState({ label: "", url: "" });
-
-  function handleFiles(e) {
-    const files = [...e.target.files];
-    e.target.value = "";
-    if (files.length) onUploadImages(files);
-  }
-
-  function submitLink() {
-    if (!linkForm.url.trim()) return;
-    onAddLink(linkForm.label, linkForm.url);
-    setLinkForm({ label: "", url: "" });
-  }
 
   return (
     <div className="detail-panel" style={statusBorderTop(campaign.status)}>
@@ -865,13 +879,7 @@ function DetailPanel({
         )}
 
         <div className="detail-section">
-          <div className="detail-section-label">
-            Immagini
-            <label className="upload-btn">
-              + Aggiungi
-              <input type="file" accept="image/*" multiple onChange={handleFiles} />
-            </label>
-          </div>
+          <div className="detail-section-label">Immagini</div>
           {images.length === 0 ? (
             <div className="detail-section-empty">Nessuna immagine allegata</div>
           ) : (
@@ -888,21 +896,9 @@ function DetailPanel({
                       >
                         ⬇
                       </button>
-                      <button
-                        className="gallery-icon-btn danger"
-                        title="Elimina"
-                        onClick={() => onDeleteImage(img)}
-                      >
-                        ✕
-                      </button>
                     </div>
                   </div>
-                  <input
-                    className="gallery-label-input"
-                    value={img.label}
-                    placeholder="Etichetta"
-                    onChange={(e) => onUpdateImageLabel(img.id, e.target.value)}
-                  />
+                  {img.label && <div className="gallery-label-view">{img.label}</div>}
                 </div>
               ))}
             </div>
@@ -911,33 +907,18 @@ function DetailPanel({
 
         <div className="detail-section">
           <div className="detail-section-label">Link</div>
-          {links.length > 0 && (
+          {links.length === 0 ? (
+            <div className="detail-section-empty">Nessun link allegato</div>
+          ) : (
             <div className="links-list">
               {links.map((l) => (
                 <div className="link-item" key={l.id}>
                   <span className="link-label">{l.label || "Link"}</span>
                   <a href={l.url} target="_blank" rel="noopener noreferrer">{l.url}</a>
-                  <button className="link-remove" title="Rimuovi" onClick={() => onDeleteLink(l.id)}>✕</button>
                 </div>
               ))}
             </div>
           )}
-          <div className="link-add-row">
-            <input
-              className="link-label-input"
-              placeholder="Etichetta (es. Figma)"
-              value={linkForm.label}
-              onChange={(e) => setLinkForm((f) => ({ ...f, label: e.target.value }))}
-            />
-            <input
-              className="link-url-input"
-              placeholder="https://..."
-              value={linkForm.url}
-              onChange={(e) => setLinkForm((f) => ({ ...f, url: e.target.value }))}
-              onKeyDown={(e) => { if (e.key === "Enter") submitLink(); }}
-            />
-            <button className="link-add-btn" onClick={submitLink}>+ Aggiungi</button>
-          </div>
         </div>
       </div>
 
