@@ -149,6 +149,9 @@
   .link-add-btn { padding: 6px 14px; border: 1px solid #1a1a1a; background: #1a1a1a; color: #fff; font-size: 12px; font-weight: 600; flex-shrink: 0; }
   .link-add-btn:hover { background: #333; }
 
+  .staged-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .staged-count { font-size: 12px; color: #888; }
+
   /* ── LIGHTBOX ───────────────────────────── */
   .lightbox-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.9); z-index: 600; display: flex; align-items: center; justify-content: center; padding: 40px 30px; flex-direction: column; gap: 16px; }
   .lightbox-overlay img { max-width: 100%; max-height: 70vh; object-fit: contain; }
@@ -420,17 +423,21 @@ function App() {
     if (row) setSelectedId(row.id);
   }
 
-  async function uploadImages(campaignId, files) {
+  // items: [{ file, label }] — label falls back to "Immagine N" when blank.
+  async function uploadImages(campaignId, items) {
     let order = images.filter((i) => i.campaign_id === campaignId).length;
-    for (const file of files) {
+    for (const item of items) {
+      const file = item.file || item;
+      const providedLabel = (item.label || "").trim();
       showSync("syncing", "Caricamento immagine...");
       try {
         const blob = await compressImage(file);
         const path = campaignId + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + ".jpg";
         const { error: upErr } = await sb.storage.from(STORAGE_BUCKET).upload(path, blob, { contentType: "image/jpeg" });
         if (upErr) throw upErr;
+        const label = providedLabel || ("Immagine " + (order + 1));
         const { data: row, error: insErr } = await sb.from("campaign_images")
-          .insert([{ campaign_id: campaignId, storage_path: path, label: "Immagine " + (order + 1), sort_order: order }])
+          .insert([{ campaign_id: campaignId, storage_path: path, label: label, sort_order: order }])
           .select().single();
         if (insErr) throw insErr;
         order++;
@@ -536,9 +543,25 @@ function App() {
   function openCreate() { setModal({ mode: "create" }); setSelectedId(null); }
   function openEdit(c) { setModal({ mode: "edit", campaign: c }); setSelectedId(null); }
 
-  async function handleSubmit(data, editId) {
-    if (editId) await updateCampaign(editId, data);
-    else { const row = await createCampaign(data); if (row) setSelectedId(row.id); }
+  // stagedImages: [{ file, label }], stagedLinks: [{ label, url }] — only
+  // relevant on create, where the campaign id doesn't exist until after
+  // the insert. If the campaign insert fails, attachments are never
+  // attempted.
+  async function handleSubmit(data, editId, stagedImages, stagedLinks) {
+    if (editId) {
+      await updateCampaign(editId, data);
+      setModal(null);
+      return;
+    }
+    const row = await createCampaign(data);
+    if (!row) { setModal(null); return; }
+    setSelectedId(row.id);
+    if (stagedImages && stagedImages.length) {
+      await uploadImages(row.id, stagedImages.map((s) => ({ file: s.file, label: s.label })));
+    }
+    if (stagedLinks && stagedLinks.length) {
+      for (const l of stagedLinks) await addLink(row.id, l.label, l.url);
+    }
     setModal(null);
   }
 
@@ -573,7 +596,7 @@ function App() {
           images={imagesByCampaign[selected.id] || []}
           links={linksByCampaign[selected.id] || []}
           getImageUrl={imagePublicUrl}
-          onUploadImages={(files) => uploadImages(selected.id, files)}
+          onUploadImages={(files) => uploadImages(selected.id, files.map((f) => ({ file: f, label: "" })))}
           onUpdateImageLabel={updateImageLabel}
           onDeleteImage={deleteImage}
           onAddLink={(label, url) => addLink(selected.id, label, url)}
@@ -589,6 +612,14 @@ function App() {
         <CampaignModal
           initial={modal.mode === "edit" ? modal.campaign : emptyForm()}
           editId={modal.mode === "edit" ? modal.campaign.id : null}
+          campaignImages={modal.mode === "edit" ? (imagesByCampaign[modal.campaign.id] || []) : []}
+          campaignLinks={modal.mode === "edit" ? (linksByCampaign[modal.campaign.id] || []) : []}
+          getImageUrl={imagePublicUrl}
+          onUploadImages={uploadImages}
+          onUpdateImageLabel={updateImageLabel}
+          onDeleteImage={deleteImage}
+          onAddLink={addLink}
+          onDeleteLink={deleteLink}
           onCancel={() => setModal(null)}
           onSubmit={handleSubmit}
         />
@@ -930,7 +961,17 @@ function DetailPanel({
 }
 
 /* ── CAMPAIGN MODAL (create / edit) ─────────────────── */
-function CampaignModal({ initial, editId, onCancel, onSubmit }) {
+// Product-relevant placeholder examples (vs. a generic "Figma"-style hint)
+// cycled across staged image/link label inputs.
+const IMAGE_LABEL_EXAMPLES = ["Scheda prodotto", "Foto packaging", "Foto lifestyle", "Dettaglio prodotto", "Hero"];
+const LINK_LABEL_PLACEHOLDER = "es. Scheda prodotto";
+
+function CampaignModal({
+  initial, editId, onCancel, onSubmit,
+  campaignImages, campaignLinks, getImageUrl,
+  onUploadImages, onUpdateImageLabel, onDeleteImage,
+  onAddLink, onDeleteLink,
+}) {
   const [form, setForm] = useState({
     label: initial.label || "",
     type: initial.type || "newsletter",
@@ -940,13 +981,26 @@ function CampaignModal({ initial, editId, onCancel, onSubmit }) {
     end_day: initial.end_day || "",
     notes: initial.notes || "",
   });
+  const [stagedImages, setStagedImages] = useState([]);
+  const [stagedLinks, setStagedLinks] = useState([]);
+  const [saving, setSaving] = useState(false);
+
+  // Revoke any leftover local preview URLs when the modal unmounts so we
+  // don't leak blob: URLs for images that were never uploaded. Uses a ref
+  // so this only fires once, on unmount — not on every staged-image change.
+  const stagedImagesRef = useRef(stagedImages);
+  useEffect(() => { stagedImagesRef.current = stagedImages; }, [stagedImages]);
+  useEffect(() => {
+    return () => { stagedImagesRef.current.forEach((it) => URL.revokeObjectURL(it.previewUrl)); };
+  }, []);
 
   function set(field, value) { setForm((prev) => ({ ...prev, [field]: value })); }
 
-  function submit(e) {
+  async function submit(e) {
     e.preventDefault();
-    if (!form.label.trim()) return;
-    onSubmit({
+    if (!form.label.trim() || saving) return;
+    setSaving(true);
+    await onSubmit({
       label: form.label.trim(),
       type: form.type,
       status: form.status,
@@ -954,13 +1008,14 @@ function CampaignModal({ initial, editId, onCancel, onSubmit }) {
       day: parseInt(form.day, 10) || 1,
       end_day: form.end_day ? parseInt(form.end_day, 10) : null,
       notes: form.notes.trim(),
-    }, editId);
+    }, editId, stagedImages, stagedLinks);
+    setSaving(false);
   }
 
   const tc = TYPES[form.type], sc = STATUSES[form.status];
 
   return (
-    <div className="overlay" onClick={onCancel}>
+    <div className="overlay" onClick={saving ? undefined : onCancel}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{editId ? "Modifica Campagna" : "Nuova Campagna"}</h2>
@@ -1018,12 +1073,250 @@ function CampaignModal({ initial, editId, onCancel, onSubmit }) {
               <label className="form-label">Descrizione / Note</label>
               <textarea className="form-textarea" value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Dettagli, obiettivi, coordinamento..."></textarea>
             </div>
+
+            <div className="form-group">
+              <label className="form-label">Immagini</label>
+              {editId ? (
+                <ModalImageGallery
+                  images={campaignImages}
+                  getImageUrl={getImageUrl}
+                  onUpload={(files) => onUploadImages(editId, files.map((f) => ({ file: f, label: "" })))}
+                  onUpdateLabel={onUpdateImageLabel}
+                  onDelete={onDeleteImage}
+                />
+              ) : (
+                <StagedImagesEditor staged={stagedImages} setStaged={setStagedImages} />
+              )}
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Link</label>
+              {editId ? (
+                <ModalLinksSection
+                  links={campaignLinks}
+                  onAdd={(label, url) => onAddLink(editId, label, url)}
+                  onDelete={onDeleteLink}
+                />
+              ) : (
+                <StagedLinksEditor staged={stagedLinks} setStaged={setStagedLinks} />
+              )}
+            </div>
           </div>
           <div className="modal-footer">
-            <button type="button" className="btn" onClick={onCancel}>Annulla</button>
-            <button type="submit" className="btn btn-primary">{editId ? "Salva Modifiche" : "Aggiungi Campagna"}</button>
+            <button type="button" className="btn" onClick={onCancel} disabled={saving}>Annulla</button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              {saving ? "Salvataggio..." : (editId ? "Salva Modifiche" : "Aggiungi Campagna")}
+            </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+/* ── STAGED IMAGES (create mode: local only until campaign is saved) ── */
+function StagedImagesEditor({ staged, setStaged }) {
+  function handleFiles(e) {
+    const files = [...e.target.files];
+    e.target.value = "";
+    const newItems = files.map((file) => ({
+      key: Date.now() + "-" + Math.random().toString(36).slice(2, 8),
+      file,
+      label: "",
+      previewUrl: URL.createObjectURL(file),
+    }));
+    setStaged((prev) => [...prev, ...newItems]);
+  }
+
+  function updateLabel(key, label) {
+    setStaged((prev) => prev.map((it) => (it.key === key ? { ...it, label } : it)));
+  }
+
+  function remove(key) {
+    setStaged((prev) => {
+      const target = prev.find((it) => it.key === key);
+      if (target) URL.revokeObjectURL(target.previewUrl);
+      return prev.filter((it) => it.key !== key);
+    });
+  }
+
+  return (
+    <div>
+      <div className="staged-header">
+        <span className="staged-count">
+          {staged.length === 0
+            ? "Verranno caricate al salvataggio"
+            : staged.length + (staged.length === 1 ? " immagine selezionata" : " immagini selezionate")}
+        </span>
+        <label className="upload-btn">
+          + Aggiungi
+          <input type="file" accept="image/*" multiple onChange={handleFiles} />
+        </label>
+      </div>
+      {staged.length > 0 && (
+        <div className="gallery">
+          {staged.map((it, idx) => (
+            <div className="gallery-item" key={it.key}>
+              <div className="gallery-thumb-wrap">
+                <img src={it.previewUrl} alt="" />
+                <div className="gallery-thumb-actions">
+                  <button type="button" className="gallery-icon-btn danger" title="Rimuovi" onClick={() => remove(it.key)}>✕</button>
+                </div>
+              </div>
+              <input
+                type="text"
+                className="gallery-label-input"
+                value={it.label}
+                placeholder={IMAGE_LABEL_EXAMPLES[idx % IMAGE_LABEL_EXAMPLES.length]}
+                onChange={(e) => updateLabel(it.key, e.target.value)}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── STAGED LINKS (create mode: local only until campaign is saved) ── */
+function StagedLinksEditor({ staged, setStaged }) {
+  const [form, setForm] = useState({ label: "", url: "" });
+
+  function add() {
+    if (!form.url.trim()) return;
+    setStaged((prev) => [...prev, { key: Date.now() + "-" + Math.random().toString(36).slice(2, 8), label: form.label.trim(), url: form.url.trim() }]);
+    setForm({ label: "", url: "" });
+  }
+
+  function remove(key) {
+    setStaged((prev) => prev.filter((l) => l.key !== key));
+  }
+
+  return (
+    <div>
+      {staged.length > 0 && (
+        <div className="links-list">
+          {staged.map((l) => (
+            <div className="link-item" key={l.key}>
+              <span className="link-label">{l.label || "Link"}</span>
+              <span style={{ flex: 1, fontSize: 13, color: "#1a1a1a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.url}</span>
+              <button type="button" className="link-remove" title="Rimuovi" onClick={() => remove(l.key)}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="link-add-row">
+        <input
+          type="text"
+          className="link-label-input"
+          placeholder={LINK_LABEL_PLACEHOLDER}
+          value={form.label}
+          onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
+        />
+        <input
+          type="text"
+          className="link-url-input"
+          placeholder="https://..."
+          value={form.url}
+          onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
+        />
+        <button type="button" className="link-add-btn" onClick={add}>+ Aggiungi</button>
+      </div>
+    </div>
+  );
+}
+
+/* ── MODAL IMAGE GALLERY (edit mode: persisted, immediate actions) ── */
+function ModalImageGallery({ images, getImageUrl, onUpload, onUpdateLabel, onDelete }) {
+  function handleFiles(e) {
+    const files = [...e.target.files];
+    e.target.value = "";
+    if (files.length) onUpload(files);
+  }
+
+  return (
+    <div>
+      <div className="staged-header">
+        <span className="staged-count">{images.length === 0 ? "Nessuna immagine allegata" : images.length + (images.length === 1 ? " immagine" : " immagini")}</span>
+        <label className="upload-btn">
+          + Aggiungi
+          <input type="file" accept="image/*" multiple onChange={handleFiles} />
+        </label>
+      </div>
+      {images.length > 0 && (
+        <div className="gallery">
+          {images.map((img) => (
+            <div className="gallery-item" key={img.id}>
+              <div className="gallery-thumb-wrap">
+                <img src={getImageUrl(img.storage_path)} alt={img.label || ""} />
+                <div className="gallery-thumb-actions">
+                  <button
+                    type="button"
+                    className="gallery-icon-btn"
+                    title="Scarica"
+                    onClick={() => downloadFile(getImageUrl(img.storage_path), (img.label || "immagine") + ".jpg")}
+                  >
+                    ⬇
+                  </button>
+                  <button type="button" className="gallery-icon-btn danger" title="Elimina" onClick={() => onDelete(img)}>✕</button>
+                </div>
+              </div>
+              <input
+                type="text"
+                className="gallery-label-input"
+                value={img.label}
+                placeholder="es. Scheda prodotto"
+                onChange={(e) => onUpdateLabel(img.id, e.target.value)}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── MODAL LINKS SECTION (edit mode: persisted, immediate actions) ── */
+function ModalLinksSection({ links, onAdd, onDelete }) {
+  const [form, setForm] = useState({ label: "", url: "" });
+
+  function submitLink() {
+    if (!form.url.trim()) return;
+    onAdd(form.label, form.url);
+    setForm({ label: "", url: "" });
+  }
+
+  return (
+    <div>
+      {links.length > 0 && (
+        <div className="links-list">
+          {links.map((l) => (
+            <div className="link-item" key={l.id}>
+              <span className="link-label">{l.label || "Link"}</span>
+              <a href={l.url} target="_blank" rel="noopener noreferrer">{l.url}</a>
+              <button type="button" className="link-remove" title="Rimuovi" onClick={() => onDelete(l.id)}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="link-add-row">
+        <input
+          type="text"
+          className="link-label-input"
+          placeholder={LINK_LABEL_PLACEHOLDER}
+          value={form.label}
+          onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
+        />
+        <input
+          type="text"
+          className="link-url-input"
+          placeholder="https://..."
+          value={form.url}
+          onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submitLink(); } }}
+        />
+        <button type="button" className="link-add-btn" onClick={submitLink}>+ Aggiungi</button>
       </div>
     </div>
   );
