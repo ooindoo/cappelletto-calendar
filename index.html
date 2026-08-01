@@ -74,6 +74,7 @@
   .campaign-row .day { font-size: 12px; color: #888; font-variant-numeric: tabular-nums; min-width: 46px; }
   .campaign-row .name { font-size: 13px; font-weight: 500; color: #1a1a1a; flex: 1; }
   .campaign-row .status-dot { width: 6px; height: 6px; flex-shrink: 0; }
+  .thumb { width: 26px; height: 26px; object-fit: cover; border: 1px solid #e8e8e8; flex-shrink: 0; background: #f8f8f8; }
 
   .status-dot { border-radius: 50%; border: 1.5px solid transparent; box-sizing: border-box; }
 
@@ -88,6 +89,7 @@
   .grid-row .day { font-size: 11px; color: #aaa; font-variant-numeric: tabular-nums; min-width: 16px; }
   .grid-row .name { font-size: 12px; color: #1a1a1a; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .grid-row .status-dot { width: 5px; height: 5px; flex-shrink: 0; }
+  .grid-row .thumb { width: 18px; height: 18px; }
 
   /* ── LEGEND ─────────────────────────────── */
   .legend { margin-top: 32px; padding-top: 20px; border-top: 1px solid #e8e8e8; }
@@ -111,6 +113,49 @@
   .detail-date strong { color: #1a1a1a; font-weight: 600; }
   .detail-notes { padding: 12px 14px; background: #f8f8f8; border: 1px solid #e8e8e8; font-size: 13px; color: #555; line-height: 1.5; white-space: pre-wrap; }
   .detail-notes-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #aaa; display: block; margin-bottom: 6px; font-weight: 700; }
+
+  /* ── DETAIL PANEL: IMAGES + LINKS ───────── */
+  .detail-section { margin-top: 18px; }
+  .detail-section-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #aaa; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+  .detail-section-empty { font-size: 12px; color: #ccc; font-style: italic; }
+
+  .upload-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px dashed #ccc; background: #fff; color: #888; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; cursor: pointer; transition: border-color .12s, color .12s; }
+  .upload-btn:hover { border-color: #1a1a1a; color: #1a1a1a; }
+  .upload-btn input { display: none; }
+
+  .gallery { display: flex; flex-wrap: wrap; gap: 12px; }
+  .gallery-item { width: 96px; }
+  .gallery-thumb-wrap { position: relative; width: 96px; height: 96px; border: 1px solid #e8e8e8; background: #f8f8f8; overflow: hidden; }
+  .gallery-thumb-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; cursor: pointer; }
+  .gallery-thumb-actions { position: absolute; top: 4px; right: 4px; display: flex; gap: 4px; }
+  .gallery-icon-btn { width: 20px; height: 20px; background: rgba(0,0,0,.65); color: #fff; border: none; font-size: 11px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+  .gallery-icon-btn:hover { background: #1a1a1a; }
+  .gallery-icon-btn.danger:hover { background: #C62828; }
+  .gallery-label-input { width: 96px; box-sizing: border-box; margin-top: 4px; font-size: 11px; padding: 3px 5px; border: 1px solid transparent; background: transparent; color: #666; text-align: center; outline: none; }
+  .gallery-label-input:hover, .gallery-label-input:focus { border-color: #e8e8e8; background: #fff; }
+
+  .links-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+  .link-item { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid #e8e8e8; }
+  .link-item .link-label { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; color: #aaa; font-weight: 700; min-width: 90px; flex-shrink: 0; }
+  .link-item a { flex: 1; font-size: 13px; color: #1a1a1a; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .link-item a:hover { text-decoration: underline; }
+  .link-remove { background: none; border: none; color: #ccc; font-size: 13px; padding: 2px 4px; flex-shrink: 0; }
+  .link-remove:hover { color: #C62828; }
+  .link-add-row { display: flex; gap: 6px; }
+  .link-add-row input { padding: 6px 9px; border: 1px solid #e8e8e8; font-size: 12px; outline: none; transition: border-color .12s; }
+  .link-add-row input:focus { border-color: #1a1a1a; }
+  .link-add-row .link-label-input { flex: 0 0 130px; }
+  .link-add-row .link-url-input { flex: 1; }
+  .link-add-btn { padding: 6px 14px; border: 1px solid #1a1a1a; background: #1a1a1a; color: #fff; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+  .link-add-btn:hover { background: #333; }
+
+  /* ── LIGHTBOX ───────────────────────────── */
+  .lightbox-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.9); z-index: 600; display: flex; align-items: center; justify-content: center; padding: 40px 30px; flex-direction: column; gap: 16px; }
+  .lightbox-overlay img { max-width: 100%; max-height: 70vh; object-fit: contain; }
+  .lightbox-caption { color: #fff; font-size: 13px; display: flex; align-items: center; gap: 18px; }
+  .lightbox-caption .btn { background: #fff; }
+  .lightbox-close { position: absolute; top: 20px; right: 24px; background: none; border: 1px solid rgba(255,255,255,.3); color: #fff; width: 32px; height: 32px; font-size: 15px; cursor: pointer; }
+  .lightbox-close:hover { border-color: #fff; }
 
   /* ── MODAL / OVERLAY ────────────────────── */
   .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 20px; }
@@ -171,6 +216,7 @@ const { useState, useEffect, useMemo, useCallback, useRef } = React;
 const SUPABASE_URL = "https://amcrfoghuurbnpmstzyk.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtY3Jmb2dodXVyYm5wbXN0enlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMzk3ODgsImV4cCI6MjEwMDcxNTc4OH0.BHgy5znAHlRIT__I1u2pOIkjZF-GlY0QGOJf7msOs3c";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const STORAGE_BUCKET = "campaign-images";
 
 const MONTHS = [
   { n: 8, name: "Agosto" },
@@ -222,9 +268,54 @@ function statusBorderTop(status) {
   return { borderTopColor: cfg.color, borderTopStyle: status === "planned" ? "dashed" : "solid" };
 }
 
+// Resizes/compresses an image client-side before upload so storage
+// isn't wasted on full-resolution phone photos.
+function compressImage(file, maxDim, quality) {
+  maxDim = maxDim || 1600;
+  quality = quality || 0.8;
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        if (width >= height) { height = Math.round(height * (maxDim / width)); width = maxDim; }
+        else { width = Math.round(width * (maxDim / height)); height = maxDim; }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+      canvas.toBlob((blob) => {
+        URL.revokeObjectURL(objectUrl);
+        blob ? resolve(blob) : reject(new Error("Compressione immagine fallita"));
+      }, "image/jpeg", quality);
+    };
+    img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error("File immagine non valido")); };
+    img.src = objectUrl;
+  });
+}
+
+// Forces a real "Save As" download (vs. navigating) regardless of
+// how the storage CDN sets Content-Disposition.
+async function downloadFile(url, filename) {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = objectUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(objectUrl);
+}
+
 /* ── APP ────────────────────────────────────────────── */
 function App() {
   const [campaigns, setCampaigns] = useState([]);
+  const [images, setImages] = useState([]);
+  const [links, setLinks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sync, setSync] = useState({ state: "hidden", message: "" });
   const [view, setView] = useState("timeline");
@@ -239,17 +330,27 @@ function App() {
   const flashSync = (state, message) => { showSync(state, message); setTimeout(() => showSync("hidden", ""), 1800); };
 
   const load = useCallback(async () => {
-    const { data, error } = await sb.from("campaigns").select("*").order("month").order("day");
+    const [campaignsRes, imagesRes, linksRes] = await Promise.all([
+      sb.from("campaigns").select("*").order("month").order("day"),
+      sb.from("campaign_images").select("*").order("sort_order"),
+      sb.from("campaign_links").select("*").order("sort_order"),
+    ]);
     setLoading(false);
-    if (error) { showSync("error", "Errore di connessione: " + error.message); return; }
-    setCampaigns(data || []);
+    if (campaignsRes.error) { showSync("error", "Errore di connessione: " + campaignsRes.error.message); return; }
+    setCampaigns(campaignsRes.data || []);
+    setImages(imagesRes.data || []);
+    setLinks(linksRes.data || []);
+    if (imagesRes.error || linksRes.error) {
+      showSync("error", "Immagini/link non disponibili: " + (imagesRes.error || linksRes.error).message);
+      return;
+    }
     showSync("connected", "Connesso — sincronizzazione in tempo reale");
     setTimeout(() => showSync("hidden", ""), 2200);
   }, []);
 
   useEffect(() => {
     load();
-    const channel = sb.channel("campaigns-realtime")
+    const channel = sb.channel("db-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "campaigns" }, (payload) => {
         if (payload.eventType === "INSERT") {
           setCampaigns((prev) => prev.some((c) => c.id === payload.new.id) ? prev : [...prev, payload.new]);
@@ -258,6 +359,24 @@ function App() {
         } else if (payload.eventType === "DELETE") {
           setCampaigns((prev) => prev.filter((c) => c.id !== payload.old.id));
           setSelectedId((sel) => (sel === payload.old.id ? null : sel));
+        }
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "campaign_images" }, (payload) => {
+        if (payload.eventType === "INSERT") {
+          setImages((prev) => prev.some((i) => i.id === payload.new.id) ? prev : [...prev, payload.new]);
+        } else if (payload.eventType === "UPDATE") {
+          setImages((prev) => prev.map((i) => (i.id === payload.new.id ? payload.new : i)));
+        } else if (payload.eventType === "DELETE") {
+          setImages((prev) => prev.filter((i) => i.id !== payload.old.id));
+        }
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "campaign_links" }, (payload) => {
+        if (payload.eventType === "INSERT") {
+          setLinks((prev) => prev.some((l) => l.id === payload.new.id) ? prev : [...prev, payload.new]);
+        } else if (payload.eventType === "UPDATE") {
+          setLinks((prev) => prev.map((l) => (l.id === payload.new.id ? payload.new : l)));
+        } else if (payload.eventType === "DELETE") {
+          setLinks((prev) => prev.filter((l) => l.id !== payload.old.id));
         }
       })
       .subscribe();
@@ -284,9 +403,13 @@ function App() {
 
   async function deleteCampaign(id) {
     showSync("syncing", "Eliminazione...");
+    const orphanPaths = images.filter((i) => i.campaign_id === id).map((i) => i.storage_path);
+    if (orphanPaths.length) await sb.storage.from(STORAGE_BUCKET).remove(orphanPaths);
     const { error } = await sb.from("campaigns").delete().eq("id", id);
     if (error) { flashSync("error", "Errore: " + error.message); return; }
     setCampaigns((prev) => prev.filter((c) => c.id !== id));
+    setImages((prev) => prev.filter((i) => i.campaign_id !== id));
+    setLinks((prev) => prev.filter((l) => l.campaign_id !== id));
     setSelectedId((sel) => (sel === id ? null : sel));
     flashSync("connected", "Campagna eliminata");
   }
@@ -295,6 +418,61 @@ function App() {
     const { id, created_at, updated_at, ...rest } = c;
     const row = await createCampaign({ ...rest, label: c.label + " (copia)" });
     if (row) setSelectedId(row.id);
+  }
+
+  async function uploadImages(campaignId, files) {
+    let order = images.filter((i) => i.campaign_id === campaignId).length;
+    for (const file of files) {
+      showSync("syncing", "Caricamento immagine...");
+      try {
+        const blob = await compressImage(file);
+        const path = campaignId + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + ".jpg";
+        const { error: upErr } = await sb.storage.from(STORAGE_BUCKET).upload(path, blob, { contentType: "image/jpeg" });
+        if (upErr) throw upErr;
+        const { data: row, error: insErr } = await sb.from("campaign_images")
+          .insert([{ campaign_id: campaignId, storage_path: path, label: "Immagine " + (order + 1), sort_order: order }])
+          .select().single();
+        if (insErr) throw insErr;
+        order++;
+        setImages((prev) => prev.some((i) => i.id === row.id) ? prev : [...prev, row]);
+      } catch (err) {
+        flashSync("error", "Errore upload: " + err.message);
+      }
+    }
+    flashSync("connected", "Immagini caricate");
+  }
+
+  async function updateImageLabel(imageId, label) {
+    const { data: row, error } = await sb.from("campaign_images").update({ label }).eq("id", imageId).select().single();
+    if (error) { flashSync("error", "Errore: " + error.message); return; }
+    setImages((prev) => prev.map((i) => (i.id === imageId ? row : i)));
+  }
+
+  async function deleteImage(image) {
+    showSync("syncing", "Eliminazione immagine...");
+    await sb.storage.from(STORAGE_BUCKET).remove([image.storage_path]);
+    const { error } = await sb.from("campaign_images").delete().eq("id", image.id);
+    if (error) { flashSync("error", "Errore: " + error.message); return; }
+    setImages((prev) => prev.filter((i) => i.id !== image.id));
+    flashSync("connected", "Immagine eliminata");
+  }
+
+  async function addLink(campaignId, label, url) {
+    if (!url.trim()) return;
+    showSync("syncing", "Salvataggio link...");
+    const order = links.filter((l) => l.campaign_id === campaignId).length;
+    const { data: row, error } = await sb.from("campaign_links")
+      .insert([{ campaign_id: campaignId, label: label.trim(), url: url.trim(), sort_order: order }])
+      .select().single();
+    if (error) { flashSync("error", "Errore: " + error.message); return; }
+    setLinks((prev) => prev.some((l) => l.id === row.id) ? prev : [...prev, row]);
+    flashSync("connected", "Link aggiunto");
+  }
+
+  async function deleteLink(id) {
+    const { error } = await sb.from("campaign_links").delete().eq("id", id);
+    if (error) { flashSync("error", "Errore: " + error.message); return; }
+    setLinks((prev) => prev.filter((l) => l.id !== id));
   }
 
   const filtered = useMemo(() => {
@@ -321,6 +499,31 @@ function App() {
   }), [campaigns]);
 
   const selected = campaigns.find((c) => c.id === selectedId) || null;
+
+  const imagesByCampaign = useMemo(() => {
+    const map = {};
+    images.forEach((img) => { (map[img.campaign_id] = map[img.campaign_id] || []).push(img); });
+    Object.values(map).forEach((arr) => arr.sort((a, b) => a.sort_order - b.sort_order || a.id - b.id));
+    return map;
+  }, [images]);
+
+  const linksByCampaign = useMemo(() => {
+    const map = {};
+    links.forEach((l) => { (map[l.campaign_id] = map[l.campaign_id] || []).push(l); });
+    Object.values(map).forEach((arr) => arr.sort((a, b) => a.sort_order - b.sort_order || a.id - b.id));
+    return map;
+  }, [links]);
+
+  function imagePublicUrl(path) {
+    return sb.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl;
+  }
+
+  function getThumbUrl(campaignId) {
+    const imgs = imagesByCampaign[campaignId];
+    if (!imgs || !imgs.length) return null;
+    const hero = imgs.find((i) => (i.label || "").trim().toLowerCase() === "hero") || imgs[0];
+    return imagePublicUrl(hero.storage_path);
+  }
 
   function toggleType(t) {
     setActiveTypes((prev) => {
@@ -357,9 +560,9 @@ function App() {
         {loading ? (
           <div className="loading-box"><div className="spinner"></div><div>Caricamento campagne...</div></div>
         ) : view === "timeline" ? (
-          <TimelineView campaigns={filtered} selectedId={selectedId} onSelect={setSelectedId} />
+          <TimelineView campaigns={filtered} selectedId={selectedId} onSelect={setSelectedId} getThumbUrl={getThumbUrl} />
         ) : (
-          <GridView campaigns={filtered} selectedId={selectedId} onSelect={setSelectedId} />
+          <GridView campaigns={filtered} selectedId={selectedId} onSelect={setSelectedId} getThumbUrl={getThumbUrl} />
         )}
         <Legend />
       </div>
@@ -367,6 +570,14 @@ function App() {
       {selected && !modal && (
         <DetailPanel
           campaign={selected}
+          images={imagesByCampaign[selected.id] || []}
+          links={linksByCampaign[selected.id] || []}
+          getImageUrl={imagePublicUrl}
+          onUploadImages={(files) => uploadImages(selected.id, files)}
+          onUpdateImageLabel={updateImageLabel}
+          onDeleteImage={deleteImage}
+          onAddLink={(label, url) => addLink(selected.id, label, url)}
+          onDeleteLink={deleteLink}
           onClose={() => setSelectedId(null)}
           onEdit={() => openEdit(selected)}
           onDuplicate={() => duplicateCampaign(selected)}
@@ -467,7 +678,7 @@ function Toolbar({ view, setView, search, setSearch, activeStatus, setActiveStat
 }
 
 /* ── TIMELINE VIEW ──────────────────────────────────── */
-function TimelineView({ campaigns, selectedId, onSelect }) {
+function TimelineView({ campaigns, selectedId, onSelect, getThumbUrl }) {
   return (
     <React.Fragment>
       {MONTHS.map((m) => {
@@ -484,6 +695,7 @@ function TimelineView({ campaigns, selectedId, onSelect }) {
               <div className="campaign-list">
                 {items.map((c) => {
                   const tc = typeOf(c);
+                  const thumbUrl = getThumbUrl(c.id);
                   return (
                     <button
                       key={c.id}
@@ -492,6 +704,7 @@ function TimelineView({ campaigns, selectedId, onSelect }) {
                       onClick={() => onSelect(selectedId === c.id ? null : c.id)}
                     >
                       <span className="day">{String(c.day).padStart(2, "0")}{c.end_day ? "–" + String(c.end_day).padStart(2, "0") : ""}</span>
+                      {thumbUrl && <img src={thumbUrl} className="thumb" alt="" />}
                       <span className="type-badge">{tc.label}</span>
                       <span className="name">{c.label}</span>
                       <span className="status-dot" style={statusDotStyle(c.status)}></span>
@@ -508,7 +721,7 @@ function TimelineView({ campaigns, selectedId, onSelect }) {
 }
 
 /* ── GRID VIEW ──────────────────────────────────────── */
-function GridView({ campaigns, selectedId, onSelect }) {
+function GridView({ campaigns, selectedId, onSelect, getThumbUrl }) {
   return (
     <div className="grid">
       {MONTHS.map((m) => {
@@ -523,6 +736,7 @@ function GridView({ campaigns, selectedId, onSelect }) {
               <div className="grid-empty">Nessuna campagna</div>
             ) : (
               items.map((c) => {
+                const thumbUrl = getThumbUrl(c.id);
                 return (
                   <button
                     key={c.id}
@@ -531,6 +745,7 @@ function GridView({ campaigns, selectedId, onSelect }) {
                     onClick={() => onSelect(selectedId === c.id ? null : c.id)}
                   >
                     <span className="day">{c.day}</span>
+                    {thumbUrl && <img src={thumbUrl} className="thumb" alt="" />}
                     <span className="name">{c.label}</span>
                     <span className="status-dot" style={statusDotStyle(c.status)}></span>
                   </button>
@@ -562,9 +777,29 @@ function Legend() {
 }
 
 /* ── DETAIL PANEL ───────────────────────────────────── */
-function DetailPanel({ campaign, onClose, onEdit, onDuplicate, onDelete }) {
+function DetailPanel({
+  campaign, images, links, getImageUrl,
+  onUploadImages, onUpdateImageLabel, onDeleteImage,
+  onAddLink, onDeleteLink,
+  onClose, onEdit, onDuplicate, onDelete,
+}) {
   const tc = typeOf(campaign), sc = statusOf(campaign);
   const month = MONTHS.find((m) => m.n === campaign.month);
+  const [lightbox, setLightbox] = useState(null);
+  const [linkForm, setLinkForm] = useState({ label: "", url: "" });
+
+  function handleFiles(e) {
+    const files = [...e.target.files];
+    e.target.value = "";
+    if (files.length) onUploadImages(files);
+  }
+
+  function submitLink() {
+    if (!linkForm.url.trim()) return;
+    onAddLink(linkForm.label, linkForm.url);
+    setLinkForm({ label: "", url: "" });
+  }
+
   return (
     <div className="detail-panel" style={statusBorderTop(campaign.status)}>
       <div className="detail-inner">
@@ -597,7 +832,99 @@ function DetailPanel({ campaign, onClose, onEdit, onDuplicate, onDelete }) {
             {campaign.notes}
           </div>
         )}
+
+        <div className="detail-section">
+          <div className="detail-section-label">
+            Immagini
+            <label className="upload-btn">
+              + Aggiungi
+              <input type="file" accept="image/*" multiple onChange={handleFiles} />
+            </label>
+          </div>
+          {images.length === 0 ? (
+            <div className="detail-section-empty">Nessuna immagine allegata</div>
+          ) : (
+            <div className="gallery">
+              {images.map((img) => (
+                <div className="gallery-item" key={img.id}>
+                  <div className="gallery-thumb-wrap">
+                    <img src={getImageUrl(img.storage_path)} alt={img.label || ""} onClick={() => setLightbox(img)} />
+                    <div className="gallery-thumb-actions">
+                      <button
+                        className="gallery-icon-btn"
+                        title="Scarica"
+                        onClick={() => downloadFile(getImageUrl(img.storage_path), (img.label || "immagine") + ".jpg")}
+                      >
+                        ⬇
+                      </button>
+                      <button
+                        className="gallery-icon-btn danger"
+                        title="Elimina"
+                        onClick={() => onDeleteImage(img)}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                  <input
+                    className="gallery-label-input"
+                    value={img.label}
+                    placeholder="Etichetta"
+                    onChange={(e) => onUpdateImageLabel(img.id, e.target.value)}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="detail-section">
+          <div className="detail-section-label">Link</div>
+          {links.length > 0 && (
+            <div className="links-list">
+              {links.map((l) => (
+                <div className="link-item" key={l.id}>
+                  <span className="link-label">{l.label || "Link"}</span>
+                  <a href={l.url} target="_blank" rel="noopener noreferrer">{l.url}</a>
+                  <button className="link-remove" title="Rimuovi" onClick={() => onDeleteLink(l.id)}>✕</button>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="link-add-row">
+            <input
+              className="link-label-input"
+              placeholder="Etichetta (es. Figma)"
+              value={linkForm.label}
+              onChange={(e) => setLinkForm((f) => ({ ...f, label: e.target.value }))}
+            />
+            <input
+              className="link-url-input"
+              placeholder="https://..."
+              value={linkForm.url}
+              onChange={(e) => setLinkForm((f) => ({ ...f, url: e.target.value }))}
+              onKeyDown={(e) => { if (e.key === "Enter") submitLink(); }}
+            />
+            <button className="link-add-btn" onClick={submitLink}>+ Aggiungi</button>
+          </div>
+        </div>
       </div>
+
+      {lightbox && (
+        <div className="lightbox-overlay" onClick={() => setLightbox(null)}>
+          <button className="lightbox-close" onClick={() => setLightbox(null)}>✕</button>
+          <img src={getImageUrl(lightbox.storage_path)} alt={lightbox.label || ""} onClick={(e) => e.stopPropagation()} />
+          <div className="lightbox-caption" onClick={(e) => e.stopPropagation()}>
+            <span>{lightbox.label || "Senza etichetta"}</span>
+            <button
+              className="btn"
+              onClick={() => downloadFile(getImageUrl(lightbox.storage_path), (lightbox.label || "immagine") + ".jpg")}
+            >
+              ⬇ Scarica
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
