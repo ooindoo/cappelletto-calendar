@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CappellettoShop — Calendario Campagne Email</title>
+<title>CappellettoShop — Calendario Campagne</title>
 <link rel="icon" href="logo.png">
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -14,8 +14,9 @@
   body { font-family: system-ui, -apple-system, sans-serif; background: #fff; color: #1a1a1a; font-size: 14px; -webkit-font-smoothing: antialiased; }
   button, input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
   button { cursor: pointer; }
+  button:disabled { cursor: default; opacity: .6; }
 
-  .sync-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 400; padding: 6px 16px; font-size: 11px; text-align: center; transition: all .3s; }
+  .sync-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 700; padding: 6px 16px; font-size: 11px; text-align: center; transition: all .3s; }
   .sync-bar.connected { background: rgba(46,125,50,.08); color: #2E7D32; }
   .sync-bar.syncing { background: rgba(21,101,192,.08); color: #1565C0; }
   .sync-bar.error { background: rgba(198,40,40,.1); color: #C62828; }
@@ -31,9 +32,15 @@
   .topbar-title span { font-size: 11px; color: #888; letter-spacing: .02em; }
   .btn-new { background: #2a2a2a; border: 1px solid #333; color: #fff; padding: 10px 18px; font-size: 13px; font-weight: 600; letter-spacing: .02em; display: flex; align-items: center; gap: 6px; transition: background .12s, border-color .12s; }
   .btn-new:hover { background: #333; border-color: #444; }
-  .topbar-stats { max-width: 1200px; margin: 0 auto; padding: 0 32px 18px; display: flex; gap: 20px; flex-wrap: wrap; font-size: 12px; color: #888; }
+  .topbar-stats { max-width: 1200px; margin: 0 auto; padding: 0 32px 16px; display: flex; gap: 20px; flex-wrap: wrap; font-size: 12px; color: #888; }
   .topbar-stats strong { color: #fff; font-weight: 700; }
   .topbar-stats .sep { color: #444; }
+  .topbar-stats .warn strong, .topbar-stats .warn { color: #FB8C00; }
+  .main-tabs { max-width: 1200px; margin: 0 auto; padding: 0 32px; display: flex; gap: 28px; border-top: 1px solid #2a2a2a; }
+  .main-tab { background: none; border: none; border-bottom: 2px solid transparent; color: #888; font-size: 13px; font-weight: 500; letter-spacing: .03em; padding: 13px 0 11px; transition: color .12s; }
+  .main-tab:hover { color: #fff; }
+  .main-tab.active { color: #fff; border-bottom-color: #fff; font-weight: 600; }
+  .main-tab .count { color: #666; font-weight: 400; margin-left: 6px; }
 
   /* ── TOOLBAR ────────────────────────────── */
   .toolbar { position: sticky; top: 0; z-index: 100; background: #fff; border-bottom: 1px solid #e8e8e8; }
@@ -47,9 +54,11 @@
   .btn-toggle.active { background: #1a1a1a; color: #fff; }
   .btn-toggle:not(.active):hover { color: #1a1a1a; background: #f8f8f8; }
   .status-group { display: flex; gap: 4px; }
-  .btn-status { padding: 8px 12px; background: #fff; border: 1px solid #e8e8e8; font-size: 12px; font-weight: 500; color: #888; transition: border-color .12s, color .12s; }
+  .btn-status { padding: 8px 12px; background: #fff; border: 1px solid #e8e8e8; font-size: 12px; font-weight: 500; color: #888; transition: border-color .12s, color .12s; display: inline-flex; align-items: center; gap: 6px; }
   .btn-status:hover { border-color: #1a1a1a; color: #1a1a1a; }
   .btn-status.active { border-color: #1a1a1a; color: #1a1a1a; background: #f8f8f8; font-weight: 700; }
+  .btn-status .status-dot { width: 7px; height: 7px; }
+  .group-sep { width: 1px; align-self: stretch; background: #e8e8e8; margin: 0 4px; }
   .type-pills { max-width: 1200px; margin: 0 auto; padding: 0 32px 14px; display: flex; gap: 8px; flex-wrap: wrap; }
   .type-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; padding: 6px 12px; border: 1px solid #e8e8e8; background: #fff; color: #888; transition: border-color .12s, color .12s, background .12s; }
   .type-pill.active { border-color: #1a1a1a; color: #1a1a1a; background: #f8f8f8; font-weight: 700; }
@@ -58,38 +67,90 @@
   .type-pill:hover { border-color: #1a1a1a; color: #1a1a1a; }
 
   /* Neutral type badge — color is reserved for status only */
-  .type-badge { display: inline-block; min-width: 140px; box-sizing: border-box; text-align: center; border: 1px solid #ddd; border-radius: 20px; padding: 2px 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #777; white-space: nowrap; background: #fff; }
+  .type-badge { display: inline-block; min-width: 150px; box-sizing: border-box; text-align: center; border: 1px solid #ddd; border-radius: 20px; padding: 2px 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #777; white-space: nowrap; background: #fff; flex-shrink: 0; }
+  .seg-chip { display: inline-block; min-width: 54px; text-align: center; font-size: 10px; font-weight: 700; letter-spacing: .06em; color: #1a1a1a; border: 1px solid #1a1a1a; padding: 2px 6px; white-space: nowrap; flex-shrink: 0; }
+  .seg-chip.empty { visibility: hidden; }
+  .fmt-chip { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; border: 1px solid #ddd; border-radius: 20px; padding: 1px 8px; color: #777; background: #fff; white-space: nowrap; }
 
   /* ── CONTENT ────────────────────────────── */
   .content { max-width: 1200px; margin: 0 auto; padding: 28px 32px 120px; }
   .month-section { margin-bottom: 30px; }
-  .month-header { display: flex; align-items: baseline; gap: 10px; padding-bottom: 10px; margin-bottom: 12px; border-bottom: 1px solid #e8e8e8; }
+  .month-header { display: flex; align-items: baseline; gap: 10px; padding-bottom: 10px; margin-bottom: 8px; border-bottom: 1px solid #e8e8e8; }
   .month-header h2 { font-size: 16px; font-weight: 700; color: #1a1a1a; letter-spacing: .01em; }
   .month-header .count { font-size: 12px; color: #aaa; }
-  .month-empty { font-size: 12px; color: #ccc; font-style: italic; padding: 4px 2px 2px; }
+  .month-now { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #fff; background: #1a1a1a; padding: 2px 7px; }
+  .month-empty { font-size: 12px; color: #ccc; font-style: italic; padding: 8px 2px 2px; }
+  .week-label { font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: .08em; margin: 14px 0 6px; }
+  .today-line { display: flex; align-items: center; gap: 10px; margin: 12px 0; font-size: 10px; font-weight: 700; color: #1a1a1a; text-transform: uppercase; letter-spacing: .1em; }
+  .today-line::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #1a1a1a; flex-shrink: 0; }
+  .today-line::after { content: ""; flex: 1; height: 2px; background: #1a1a1a; }
+  .past-toggle { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 24px; background: #f8f8f8; border: 1px dashed #ddd; font-size: 12px; color: #888; text-align: left; }
+  .past-toggle strong { color: #1a1a1a; }
+  .past-toggle:hover { border-color: #1a1a1a; color: #1a1a1a; }
+  .past-toggle .warn { color: #E65100; font-weight: 600; }
+
   .campaign-list { display: flex; flex-direction: column; gap: 4px; }
-  .campaign-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #fff; border: 1px solid #e8e8e8; border-left: 3px solid #ccc; cursor: pointer; width: 100%; text-align: left; transition: background .12s, border-color .12s; box-sizing: border-box; }
+  .campaign-row { display: flex; align-items: center; gap: 12px; padding: 8px 10px 8px 14px; background: #fff; border: 1px solid #e8e8e8; border-left: 3px solid #ccc; cursor: pointer; width: 100%; text-align: left; transition: background .12s, border-color .12s, opacity .12s; box-sizing: border-box; outline: none; }
   .campaign-row:hover { background: #f8f8f8; }
+  .campaign-row:focus-visible { outline: 2px solid #1a1a1a; outline-offset: 1px; }
   .campaign-row.selected { background: #f8f8f8; border-color: #1a1a1a; }
-  .campaign-row .day { font-size: 12px; color: #888; font-variant-numeric: tabular-nums; min-width: 46px; }
-  .campaign-row .name { font-size: 13px; font-weight: 500; color: #1a1a1a; flex: 1; }
-  .campaign-row .status-dot { width: 6px; height: 6px; flex-shrink: 0; }
+  .campaign-row.is-past { opacity: .55; }
+  .campaign-row.is-past:hover, .campaign-row.is-past.selected { opacity: 1; }
+  .campaign-row .day { font-size: 12px; color: #888; font-variant-numeric: tabular-nums; min-width: 66px; white-space: nowrap; }
+  .campaign-row .day b { color: #1a1a1a; font-weight: 600; margin-right: 3px; }
+  .campaign-row .name { font-size: 13px; font-weight: 500; color: #1a1a1a; flex: 1; min-width: 0; }
+  .thumb-slot { width: 26px; height: 26px; flex-shrink: 0; display: inline-flex; }
   .thumb { width: 26px; height: 26px; object-fit: cover; border: 1px solid #e8e8e8; flex-shrink: 0; background: #f8f8f8; }
+  .past-flag { display: inline-block; margin-left: 8px; font-size: 10px; font-weight: 700; color: #E65100; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+  .linked-count { font-size: 11px; color: #888; white-space: nowrap; flex-shrink: 0; }
 
-  .status-dot { border-radius: 50%; border: 1.5px solid transparent; box-sizing: border-box; }
+  .status-dot { border-radius: 50%; border: 1.5px solid transparent; box-sizing: border-box; display: inline-block; }
+  .status-wrap { position: relative; flex-shrink: 0; display: inline-flex; }
+  .status-btn { width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; background: none; border: 1px solid transparent; padding: 0; }
+  .status-btn:hover { border-color: #e8e8e8; background: #fff; }
+  .status-btn .status-dot { width: 9px; height: 9px; }
+  .status-menu { position: absolute; right: 0; top: calc(100% + 4px); background: #fff; border: 1px solid #1a1a1a; box-shadow: 0 8px 24px rgba(0,0,0,.12); z-index: 300; min-width: 180px; padding: 4px 0; }
+  .status-menu-title { font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: .08em; padding: 6px 14px 4px; }
+  .status-menu button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 14px; background: none; border: none; font-size: 12px; color: #1a1a1a; text-align: left; }
+  .status-menu button:hover { background: #f8f8f8; }
+  .status-menu button.current { font-weight: 700; }
+  .status-menu .status-dot { width: 8px; height: 8px; flex-shrink: 0; }
 
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
-  .grid-card { border: 1px solid #e8e8e8; padding: 16px; min-height: 100px; }
-  .grid-card-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #e8e8e8; }
-  .grid-card-header .name { font-size: 13px; font-weight: 700; color: #1a1a1a; }
-  .grid-card-header .count { font-size: 11px; color: #aaa; }
-  .grid-empty { font-size: 11px; color: #bbb; font-style: italic; text-align: center; padding: 16px 0; }
-  .grid-row { display: flex; align-items: center; gap: 8px; padding: 6px 4px; border-left: 2px solid #ccc; padding-left: 8px; width: 100%; text-align: left; background: none; border-top: none; border-right: none; border-bottom: none; transition: background .12s; box-sizing: border-box; }
-  .grid-row:hover { background: #f8f8f8; }
-  .grid-row .day { font-size: 11px; color: #aaa; font-variant-numeric: tabular-nums; min-width: 16px; }
-  .grid-row .name { font-size: 12px; color: #1a1a1a; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .grid-row .status-dot { width: 5px; height: 5px; flex-shrink: 0; }
-  .grid-row .thumb { width: 18px; height: 18px; }
+  /* ── CALENDAR (month grid) ──────────────── */
+  .cal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+  .cal-title { font-size: 18px; font-weight: 700; }
+  .cal-nav { display: flex; gap: 4px; }
+  .cal-nav button { min-width: 36px; height: 34px; padding: 0 12px; background: #fff; border: 1px solid #e8e8e8; font-size: 13px; color: #1a1a1a; }
+  .cal-nav button:hover { border-color: #1a1a1a; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-top: 1px solid #e8e8e8; border-left: 1px solid #e8e8e8; }
+  .cal-dow { padding: 8px; font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: .08em; border-right: 1px solid #e8e8e8; border-bottom: 1px solid #e8e8e8; background: #f8f8f8; }
+  .cal-cell { position: relative; min-height: 112px; padding: 6px; border-right: 1px solid #e8e8e8; border-bottom: 1px solid #e8e8e8; background: #fff; display: flex; flex-direction: column; gap: 3px; min-width: 0; cursor: pointer; }
+  .cal-cell.other { background: #fbfbfb; }
+  .cal-cell.other .cal-daynum .n { color: #ccc; }
+  .cal-cell.drop { background: #f3f3f3; outline: 2px dashed #1a1a1a; outline-offset: -3px; }
+  .cal-cell.selected-day { outline: 2px solid #1a1a1a; outline-offset: -2px; }
+  .cal-daynum { font-size: 11px; color: #888; font-variant-numeric: tabular-nums; display: flex; justify-content: space-between; align-items: center; height: 22px; }
+  .cal-daynum .n { width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; }
+  .cal-cell.today .cal-daynum .n { background: #1a1a1a; color: #fff; border-radius: 50%; font-weight: 700; }
+  .cal-add { opacity: 0; background: #fff; border: 1px solid #e8e8e8; width: 22px; height: 22px; font-size: 13px; color: #888; line-height: 1; padding: 0; }
+  .cal-cell:hover .cal-add { opacity: 1; }
+  .cal-add:hover { border-color: #1a1a1a; color: #1a1a1a; }
+  .cal-chip { display: flex; align-items: center; gap: 5px; width: 100%; min-width: 0; padding: 3px 5px; font-size: 11px; text-align: left; background: #fff; border: 1px solid #e8e8e8; border-left: 3px solid #ccc; color: #1a1a1a; }
+  .cal-chip:hover { border-color: #1a1a1a; }
+  .cal-chip.is-past { opacity: .55; }
+  .cal-chip.selected { border-color: #1a1a1a; background: #f8f8f8; opacity: 1; }
+  .cal-chip .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cal-chip .s { font-size: 9px; font-weight: 700; color: #888; flex-shrink: 0; letter-spacing: .04em; }
+  .cal-chip.social { border-style: dashed; border-left: 3px dashed #999; color: #555; background: #fcfcfc; }
+  .cal-chip[draggable="true"] { cursor: grab; }
+  .cal-more { font-size: 10px; color: #888; padding: 0 2px; }
+  .cal-dots { display: none; }
+  .cal-hint { font-size: 11px; color: #aaa; margin-top: 10px; }
+  .day-list { margin-top: 20px; }
+  .day-list-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid #e8e8e8; }
+  .day-list-head h3 { font-size: 14px; font-weight: 700; }
+  .social-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px dashed #ccc; background: #fcfcfc; cursor: pointer; width: 100%; text-align: left; font-size: 13px; color: #1a1a1a; }
+  .social-row:hover { border-color: #1a1a1a; }
 
   /* ── LEGEND ─────────────────────────────── */
   .legend { margin-top: 32px; padding-top: 20px; border-top: 1px solid #e8e8e8; }
@@ -97,9 +158,10 @@
   .legend-items { display: flex; gap: 20px; flex-wrap: wrap; font-size: 12px; color: #888; }
   .legend-item { display: flex; gap: 6px; align-items: center; }
   .legend-dot { width: 7px; height: 7px; display: inline-block; border-radius: 50%; border: 1.5px solid transparent; box-sizing: border-box; }
+  .legend-note { font-size: 11px; color: #aaa; margin-top: 10px; }
 
   /* ── DETAIL PANEL ───────────────────────── */
-  .detail-panel { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 3px solid #ccc; box-shadow: 0 -8px 30px rgba(0,0,0,.12); z-index: 250; max-height: 42vh; overflow-y: auto; }
+  .detail-panel { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 3px solid #ccc; box-shadow: 0 -8px 30px rgba(0,0,0,.12); z-index: 250; max-height: 46vh; overflow-y: auto; }
   .detail-inner { max-width: 1200px; margin: 0 auto; padding: 22px 32px 26px; }
   .detail-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 12px; }
   .detail-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
@@ -113,16 +175,25 @@
   .detail-date strong { color: #1a1a1a; font-weight: 600; }
   .detail-notes { padding: 12px 14px; background: #f8f8f8; border: 1px solid #e8e8e8; font-size: 13px; color: #555; line-height: 1.5; white-space: pre-wrap; }
   .detail-notes-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #aaa; display: block; margin-bottom: 6px; font-weight: 700; }
+  .status-pills { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 14px; }
+  .status-pills .lbl { font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: .08em; margin-right: 4px; }
+  .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; font-size: 12px; background: #fff; border: 1px solid #e8e8e8; color: #888; }
+  .status-pill:hover { border-color: #1a1a1a; color: #1a1a1a; }
+  .status-pill.active { color: #1a1a1a; font-weight: 700; border-color: #1a1a1a; }
+  .status-pill .status-dot { width: 8px; height: 8px; }
+  .linked-list { display: flex; flex-direction: column; gap: 6px; }
+  .linked-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px dashed #ccc; background: #fcfcfc; width: 100%; text-align: left; font-size: 13px; color: #1a1a1a; }
+  .linked-item:hover { border-color: #1a1a1a; }
+  .linked-item .muted { color: #888; font-size: 11px; margin-left: auto; white-space: nowrap; }
+  .link-btn { background: none; border: none; border-bottom: 1px solid #1a1a1a; padding: 0; font-size: 12px; color: #1a1a1a; font-weight: 600; }
 
-  /* ── DETAIL PANEL: IMAGES + LINKS ───────── */
+  /* ── IMAGES + LINKS ─────────────────────── */
   .detail-section { margin-top: 18px; }
   .detail-section-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #aaa; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
   .detail-section-empty { font-size: 12px; color: #ccc; font-style: italic; }
-
   .upload-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px dashed #ccc; background: #fff; color: #888; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; cursor: pointer; transition: border-color .12s, color .12s; }
   .upload-btn:hover { border-color: #1a1a1a; color: #1a1a1a; }
   .upload-btn input { display: none; }
-
   .gallery { display: flex; flex-wrap: wrap; gap: 12px; }
   .gallery-item { width: 96px; }
   .gallery-thumb-wrap { position: relative; width: 96px; height: 96px; border: 1px solid #e8e8e8; background: #f8f8f8; overflow: hidden; }
@@ -134,22 +205,24 @@
   .gallery-label-input { width: 96px; box-sizing: border-box; margin-top: 4px; font-size: 11px; padding: 3px 5px; border: 1px solid transparent; background: transparent; color: #666; text-align: center; outline: none; }
   .gallery-label-input:hover, .gallery-label-input:focus { border-color: #e8e8e8; background: #fff; }
   .gallery-label-view { width: 96px; box-sizing: border-box; margin-top: 4px; font-size: 11px; padding: 3px 5px; color: #666; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
   .links-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
   .link-item { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid #e8e8e8; }
   .link-item .link-label { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; color: #aaa; font-weight: 700; min-width: 90px; flex-shrink: 0; }
-  .link-item a { flex: 1; font-size: 13px; color: #1a1a1a; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .link-item a, .link-item .link-text { flex: 1; min-width: 0; font-size: 13px; color: #1a1a1a; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .link-item a:hover { text-decoration: underline; }
+  .link-item .link-text { color: #888; }
+  .bad-tag { font-size: 10px; font-weight: 700; color: #C62828; text-transform: uppercase; letter-spacing: .04em; flex-shrink: 0; }
   .link-remove { background: none; border: none; color: #ccc; font-size: 13px; padding: 2px 4px; flex-shrink: 0; }
   .link-remove:hover { color: #C62828; }
   .link-add-row { display: flex; gap: 6px; }
   .link-add-row input { padding: 6px 9px; border: 1px solid #e8e8e8; font-size: 12px; outline: none; transition: border-color .12s; }
   .link-add-row input:focus { border-color: #1a1a1a; }
-  .link-add-row .link-label-input { flex: 0 0 130px; }
-  .link-add-row .link-url-input { flex: 1; }
+  .link-add-row input.invalid { border-color: #C62828; }
+  .link-add-row .link-label-input { flex: 0 0 150px; }
+  .link-add-row .link-url-input { flex: 1; min-width: 0; }
   .link-add-btn { padding: 6px 14px; border: 1px solid #1a1a1a; background: #1a1a1a; color: #fff; font-size: 12px; font-weight: 600; flex-shrink: 0; }
   .link-add-btn:hover { background: #333; }
-
+  .field-error { color: #C62828; font-size: 11px; margin-top: 6px; }
   .staged-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .staged-count { font-size: 12px; color: #888; }
 
@@ -161,9 +234,31 @@
   .lightbox-close { position: absolute; top: 20px; right: 24px; background: none; border: 1px solid rgba(255,255,255,.3); color: #fff; width: 32px; height: 32px; font-size: 15px; cursor: pointer; }
   .lightbox-close:hover { border-color: #fff; }
 
+  /* ── SOCIAL BOARD ───────────────────────── */
+  .board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; align-items: start; }
+  .board-col { background: #f8f8f8; border: 1px solid #e8e8e8; min-height: 260px; display: flex; flex-direction: column; }
+  .board-col.drop { outline: 2px dashed #1a1a1a; outline-offset: -3px; }
+  .board-col-head { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 14px; border-bottom: 1px solid #e8e8e8; background: #fff; }
+  .board-col-head .name { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #1a1a1a; }
+  .board-col-head .count { font-size: 11px; color: #aaa; }
+  .board-col-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .board-empty { font-size: 11px; color: #bbb; font-style: italic; text-align: center; padding: 18px 0; }
+  .board-card { background: #fff; border: 1px solid #e8e8e8; cursor: pointer; text-align: left; width: 100%; display: block; padding: 0; transition: border-color .12s; }
+  .board-card:hover, .board-card.selected { border-color: #1a1a1a; }
+  .board-card.dragging { opacity: .4; }
+  .board-card[draggable="true"] { cursor: grab; }
+  .board-card-img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; background: #f0f0f0; border-bottom: 1px solid #e8e8e8; }
+  .board-card-body { padding: 10px 12px 12px; }
+  .board-card-title { font-size: 13px; font-weight: 600; color: #1a1a1a; line-height: 1.35; margin-bottom: 8px; }
+  .board-card-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 11px; color: #888; }
+  .board-card-link { margin-top: 8px; font-size: 11px; color: #555; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .board-tabs { display: none; }
+  .notice-box { padding: 32px 24px; border: 1px dashed #ddd; text-align: center; color: #888; font-size: 13px; line-height: 1.6; }
+  .notice-box strong { color: #1a1a1a; }
+
   /* ── MODAL / OVERLAY ────────────────────── */
   .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 20px; }
-  .modal { background: #fff; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; }
+  .modal { background: #fff; width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto; }
   .modal-sm { max-width: 400px; }
   .modal-header { padding: 22px 28px; border-bottom: 1px solid #e8e8e8; }
   .modal-header h2 { font-size: 16px; font-weight: 700; color: #1a1a1a; }
@@ -175,77 +270,113 @@
   .btn-primary:hover { background: #333; border-color: #333; }
   .btn-danger { background: #C62828; border-color: #C62828; color: #fff; }
   .btn-danger:hover { background: #B71C1C; border-color: #B71C1C; }
-
   .form-group { margin-bottom: 16px; }
   .form-label { font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; display: block; }
+  .auto-tag { font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #1a1a1a; background: #ececec; padding: 1px 6px; margin-left: 6px; }
   .form-input, .form-select, .form-textarea { width: 100%; padding: 9px 11px; border: 1px solid #e8e8e8; background: #fff; color: #1a1a1a; outline: none; transition: border-color .12s; }
   .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: #1a1a1a; }
   .form-input::placeholder, .form-textarea::placeholder { color: #bbb; }
   .form-textarea { min-height: 72px; resize: vertical; }
-  .form-select { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23aaa'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+  .form-select { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23aaa'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 30px; }
   .form-row { display: grid; gap: 12px; }
   .form-row-2 { grid-template-columns: 1fr 1fr; }
   .form-row-3 { grid-template-columns: 1fr 1fr 1fr; }
-
+  .form-hint { font-size: 11px; color: #aaa; margin-top: 6px; }
+  .suggest-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 8px; font-size: 12px; color: #888; }
+  .suggest-row b { color: #1a1a1a; }
+  .suggest-apply { background: #fff; border: 1px solid #1a1a1a; padding: 3px 10px; font-size: 11px; font-weight: 700; color: #1a1a1a; }
+  .suggest-apply:hover { background: #1a1a1a; color: #fff; }
   .preview-box { padding: 14px; background: #f8f8f8; border: 1px solid #e8e8e8; margin-bottom: 18px; }
   .preview-label { font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
   .preview-row { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #e8e8e8; border-left: 3px solid #ccc; padding: 9px 12px; box-sizing: border-box; }
-  .preview-row .day { font-size: 12px; color: #888; min-width: 44px; }
-  .preview-row .name { font-size: 13px; font-weight: 500; color: #1a1a1a; flex: 1; }
-  .preview-row .status-dot { width: 6px; height: 6px; flex-shrink: 0; }
+  .preview-row .day { font-size: 12px; color: #888; min-width: 62px; white-space: nowrap; }
+  .preview-row .day b { color: #1a1a1a; font-weight: 600; margin-right: 3px; }
+  .preview-row .name { font-size: 13px; font-weight: 500; color: #1a1a1a; flex: 1; min-width: 0; }
+  .preview-row .status-dot { width: 8px; height: 8px; flex-shrink: 0; }
 
   .loading-box, .empty-box { text-align: center; padding: 60px 20px; color: #aaa; font-size: 13px; }
   .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid #eee; border-top-color: #888; border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: 10px; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  @media (max-width: 1000px) {
+    .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
   @media (max-width: 700px) {
     .topbar-inner { padding: 16px 16px 14px; row-gap: 14px; }
     .btn-new { min-height: 44px; }
-    .topbar-stats { padding: 0 16px 14px; gap: 6px 14px; }
+    .topbar-stats { padding: 0 16px 12px; gap: 6px 14px; }
     .topbar-stats .sep { display: none; }
+    .main-tabs { padding: 0 16px; gap: 22px; }
+    .main-tab { min-height: 44px; }
     .toolbar-inner { padding: 12px 16px; }
     .search-input { width: 100%; min-height: 44px; }
     .btn-toggle { min-height: 44px; }
+    .group-sep { display: none; }
 
-    /* Status + type filters: compact pill strips that scroll
-       horizontally instead of wrapping into several rows of
-       full-width buttons — this is what was eating vertical space
-       before any campaign card was visible. */
+    /* Filters: compact horizontally-scrolling pill strips. */
     .status-group {
       flex-basis: 100%; flex-wrap: nowrap; overflow-x: auto;
-      -webkit-overflow-scrolling: touch; scrollbar-width: none;
-      -ms-overflow-style: none;
+      -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;
     }
     .status-group::-webkit-scrollbar { display: none; }
     .btn-status { flex: 0 0 auto; white-space: nowrap; min-height: 36px; }
-
     .type-pills {
       padding: 0 16px 12px; flex-wrap: nowrap; overflow-x: auto;
-      -webkit-overflow-scrolling: touch; scrollbar-width: none;
-      -ms-overflow-style: none;
+      -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;
     }
     .type-pills::-webkit-scrollbar { display: none; }
     .type-pill { flex: 0 0 auto; white-space: nowrap; min-height: 36px; }
 
     .content { padding: 20px 16px 100px; }
 
-    /* Rows: keep day/badge/status on one compact line, let the name
-       wrap on its own full-width line instead of overflowing. */
+    /* Rows: compact first line (date, badges, status), name on its own line. */
     .campaign-row, .preview-row { flex-wrap: wrap; row-gap: 6px; }
-    .campaign-row .status-dot, .preview-row .status-dot { order: 4; }
-    .campaign-row .name, .preview-row .name { order: 5; flex-basis: 100%; min-width: 0; }
+    .campaign-row .day, .preview-row .day { order: 1; min-width: 0; }
+    .thumb-slot { order: 2; }
+    .thumb-slot.empty { display: none; }
+    .campaign-row .type-badge, .preview-row .type-badge { order: 3; min-width: 0; flex-shrink: 1; max-width: 27vw; overflow: hidden; text-overflow: ellipsis; font-size: 9px; padding: 2px 8px; }
+    .campaign-row { flex-wrap: wrap; column-gap: 8px; }
+    .past-toggle > span:last-child { display: none; }
+    .seg-chip { order: 4; min-width: 0; }
+    .seg-chip.empty { display: none; }
+    .linked-count { order: 5; }
+    .status-wrap, .preview-row .status-dot { order: 6; margin-left: auto; }
+    .campaign-row .name, .preview-row .name { order: 7; flex-basis: 100%; }
+    .status-btn { width: 40px; height: 40px; }
 
+    .cal-cell { min-height: 54px; padding: 4px; gap: 4px; }
+    .cal-chip, .cal-add, .cal-more { display: none; }
+    .cal-dots { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; }
+    .cal-dots .status-dot { width: 7px; height: 7px; }
+    .cal-dots .soc { width: 7px; height: 7px; border: 1px dashed #888; border-radius: 50%; }
+    .cal-dow { padding: 6px 2px; text-align: center; font-size: 9px; }
+    .cal-daynum { justify-content: center; }
+    .cal-nav button { min-height: 40px; }
+
+    .board { grid-template-columns: 1fr; }
+    .board-col { display: none; min-height: 0; }
+    .board-col.mobile-active { display: flex; }
+    .board-tabs {
+      display: flex; gap: 4px; margin-bottom: 12px; overflow-x: auto;
+      scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    }
+    .board-tabs::-webkit-scrollbar { display: none; }
+
+    .detail-panel { max-height: 70vh; }
     .detail-inner { padding: 16px 16px 20px; }
     .detail-top { flex-direction: column; align-items: stretch; gap: 12px; }
     .detail-title { font-size: 17px; }
     .detail-actions { flex-wrap: wrap; }
     .btn-icon { flex: 1 1 auto; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+    .status-pill { min-height: 38px; }
 
     .modal-header, .modal-body, .modal-footer { padding-left: 18px; padding-right: 18px; }
     .form-input, .form-select, .form-textarea { min-height: 44px; }
     .form-textarea { min-height: 80px; }
     .btn, .btn-primary, .btn-danger { min-height: 44px; }
     .form-row-2, .form-row-3 { grid-template-columns: 1fr; }
+    .suggest-apply { min-height: 32px; }
 
     .upload-btn { min-height: 40px; padding: 8px 12px; }
     .gallery-icon-btn { width: 32px; height: 32px; font-size: 13px; }
@@ -254,7 +385,6 @@
     .link-add-row .link-label-input, .link-add-row .link-url-input { flex: 1 1 auto; width: 100%; min-height: 44px; }
     .link-add-btn { width: 100%; min-height: 44px; }
     .link-item { flex-wrap: wrap; }
-
     .lightbox-close { width: 40px; height: 40px; }
     .lightbox-caption { flex-wrap: wrap; justify-content: center; text-align: center; }
   }
@@ -271,42 +401,94 @@ const SUPABASE_URL = "https://amcrfoghuurbnpmstzyk.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtY3Jmb2dodXVyYm5wbXN0enlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMzk3ODgsImV4cCI6MjEwMDcxNTc4OH0.BHgy5znAHlRIT__I1u2pOIkjZF-GlY0QGOJf7msOs3c";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const STORAGE_BUCKET = "campaign-images";
+const BASE_YEAR = 2026;
 
-const MONTHS = [
-  { n: 8, name: "Agosto" },
-  { n: 9, name: "Settembre" },
-  { n: 10, name: "Ottobre" },
-  { n: 11, name: "Novembre" },
-  { n: 12, name: "Dicembre" },
-];
+const MONTH_NAMES = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+const MONTH_SHORT = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"];
+const WEEKDAY_SHORT = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
+const WEEKDAY_LONG = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
+const DOW_HEAD = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
 
+// Type taxonomy rebuilt from 3 months of real usage: "Newsletter" had become a
+// catch-all (20/32) and "Automazione" was never used.
 const TYPES = {
-  launch:     { label: "Lancio Prodotto" },
-  promo:      { label: "Promozione / Sconto" },
-  newsletter: { label: "Newsletter" },
-  editorial:  { label: "Editoriale / Storytelling" },
-  event:      { label: "Evento / Fiera" },
-  automation: { label: "Automazione / Flow" },
+  launch:        { label: "Nuovi arrivi / Lancio" },
+  back_in_stock: { label: "Back in stock" },
+  brand:         { label: "Focus brand" },
+  seasonal:      { label: "Stagionale / Categoria" },
+  promo:         { label: "Promo / Saldi" },
+  event:         { label: "Evento" },
+  editorial:     { label: "Editoriale / Storytelling" },
 };
+const LEGACY_TYPE = { newsletter: "seasonal", automation: "editorial" };
+const DEFAULT_TYPE = "seasonal";
 
 const STATUSES = {
-  confirmed: { label: "Confermato",   color: "#2E7D32" },
-  planned:   { label: "Pianificato",  color: "#1565C0" },
-  tbd:       { label: "TBD",          color: "#E65100" },
+  tbd:       { label: "TBD",         color: "#E65100" },
+  planned:   { label: "Pianificato", color: "#1565C0" },
+  confirmed: { label: "Confermato",  color: "#2E7D32" },
+  sent:      { label: "Inviata",     color: "#757575" },
+};
+const STATUS_ORDER = ["tbd", "planned", "confirmed", "sent"];
+
+const SEGMENTS = {
+  uomo:     { label: "Uomo",         short: "UOMO" },
+  donna:    { label: "Donna",        short: "DONNA" },
+  entrambi: { label: "Uomo + Donna", short: "U + D" },
 };
 
-const emptyForm = () => ({
-  label: "", type: "newsletter", status: "tbd",
-  month: 8, day: 1, end_day: "", notes: "",
-});
+const SOCIAL_STATUSES = {
+  idea:      { label: "Idea" },
+  approved:  { label: "Approvata" },
+  todo:      { label: "Da realizzare" },
+  published: { label: "Pubblicata" },
+};
+const SOCIAL_ORDER = ["idea", "approved", "todo", "published"];
+const SOCIAL_FORMATS = { reel: "Reel", post: "Post", carousel: "Carosello", story: "Story", tiktok: "TikTok", other: "Altro" };
 
-/* ── HELPERS ────────────────────────────────────────── */
-function typeOf(c) { return TYPES[c.type] || TYPES.newsletter; }
+const ATTACH = {
+  campaign: { images: "campaign_images", links: "campaign_links", fk: "campaign_id", prefix: "" },
+  social:   { images: "social_images",   links: "social_links",   fk: "post_id",     prefix: "social/" },
+};
+
+const IMAGE_LABEL_EXAMPLES = ["Scheda prodotto", "Foto packaging", "Foto lifestyle", "Dettaglio prodotto", "Hero"];
+const INSPO_LABEL_EXAMPLES = ["Inspo mood", "Riferimento luce", "Outfit", "Inquadratura", "Prodotto"];
+const LINK_LABEL_PLACEHOLDER = "es. Scheda prodotto";
+const INSPO_LINK_PLACEHOLDER = "es. Reel di riferimento";
+
+/* ── DATE HELPERS ───────────────────────────────────── */
+function startOfDay(d) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
+const TODAY = startOfDay(new Date());
+function pad2(n) { return String(n).padStart(2, "0"); }
+function isoDate(y, m, d) { return y + "-" + pad2(m) + "-" + pad2(d); }
+function isoOf(date) { return isoDate(date.getFullYear(), date.getMonth() + 1, date.getDate()); }
+function parseIso(s) { const p = String(s).split("-").map(Number); return { y: p[0], m: p[1], d: p[2] }; }
+function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
+function yearOf(c) { return c.year || BASE_YEAR; }
+function dateOf(c) { return new Date(yearOf(c), c.month - 1, c.day); }
+function endDateOf(c) { return c.end_day ? new Date(yearOf(c), c.month - 1, c.end_day) : dateOf(c); }
+function isPast(c) { return endDateOf(c) < TODAY; }
+function monthKey(y, m) { return y * 12 + (m - 1); }
+function keyToYM(k) { return { y: Math.floor(k / 12), m: (k % 12) + 1 }; }
+function weekStart(d) { const x = startOfDay(d); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; }
+function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function fmtShort(d) { return WEEKDAY_SHORT[d.getDay()] + " " + d.getDate() + " " + MONTH_SHORT[d.getMonth()]; }
+function fmtLong(d) { return WEEKDAY_LONG[d.getDay()] + " " + d.getDate() + " " + MONTH_NAMES[d.getMonth()].toLowerCase() + " " + d.getFullYear(); }
+function weekLabel(ws) {
+  const we = addDays(ws, 6);
+  return ws.getMonth() === we.getMonth()
+    ? "Settimana " + ws.getDate() + " – " + we.getDate() + " " + MONTH_SHORT[we.getMonth()]
+    : "Settimana " + ws.getDate() + " " + MONTH_SHORT[ws.getMonth()] + " – " + we.getDate() + " " + MONTH_SHORT[we.getMonth()];
+}
+
+/* ── DOMAIN HELPERS ─────────────────────────────────── */
+function typeKey(c) { return LEGACY_TYPE[c.type] || (TYPES[c.type] ? c.type : DEFAULT_TYPE); }
+function typeOf(c) { return TYPES[typeKey(c)]; }
 function statusOf(c) { return STATUSES[c.status] || STATUSES.tbd; }
+function needsSentMark(c) { return isPast(c) && c.status !== "sent"; }
 
-// Color is reserved exclusively for status. "planned" renders as a
-// dashed outline instead of a solid fill so it reads at a glance
-// without relying on color alone.
+// Color is reserved for status. "Pianificato" is an outline so it reads
+// without relying on color; "Inviata" is a filled neutral gray.
 function statusDotStyle(status) {
   const cfg = STATUSES[status] || STATUSES.tbd;
   return status === "planned"
@@ -322,8 +504,55 @@ function statusBorderTop(status) {
   return { borderTopColor: cfg.color, borderTopStyle: status === "planned" ? "dashed" : "solid" };
 }
 
-// Resizes/compresses an image client-side before upload so storage
-// isn't wasted on full-resolution phone photos.
+// Keyword rules that turn a title into a suggested type/segment. Order matters:
+// "NO BLACK FRIDAY" is editorial, not promo; "back in stock" beats "new".
+const TYPE_RULES = [
+  ["editorial", /no black friday|senza tempo|storytelling|\bstoria\b|dietro le quinte|manifesto|heritage/],
+  ["back_in_stock", /back in stock|restock|\btornat[iaoe]\b|di nuovo disponibil/],
+  ["event", /evento|save the date|\bfiera\b|workshop|trunk show|boot black/],
+  ["promo", /saldi|\bscont[oi]\b|\bpromo\b|codice|welcome code|\d+\s?%|outlet|ultima chiamata|\boffert[ae]\b|black friday|cyber monday/],
+  ["launch", /nuovi arrivi|nuovo arrivo|nuov[ae] uscit[ae]|\bnew in\b|novit[àa]|\blancio\b|\bdrop\b|nuova collezione|\bin arrivo\b|\bnew\b/],
+  ["seasonal", /invern|autunn|primaver|estat|natal|regal|stagion|indispensabil|freddo|winter|summer|montagna|\bmare\b|cerimoni|matrimoni|red carpet|stival|giacch|accessori/],
+  ["brand", /\bfocus\b|\bbrand\b/],
+];
+function detectSegment(text) {
+  const t = (text || "").toLowerCase();
+  if (!t) return null;
+  if (/entrambi|unisex|uomo e donna|donna e uomo|uomo\s*[\/+&]\s*donna|donna\s*[\/+&]\s*uomo/.test(t)) return "entrambi";
+  const u = /\buom[oi]\b|\bmen\b/.test(t);
+  const d = /\bdonn[ae]\b|\bwomen\b/.test(t);
+  if (u && d) return "entrambi";
+  if (u) return "uomo";
+  if (d) return "donna";
+  return null;
+}
+function detectFromText(label, notes) {
+  const t = (label || "").toLowerCase();
+  let type = null;
+  for (const [k, re] of TYPE_RULES) { if (re.test(t)) { type = k; break; } }
+  return { type, segment: detectSegment(label) || detectSegment(notes) };
+}
+function segmentOf(c) {
+  if (c.segment && SEGMENTS[c.segment]) return c.segment;
+  return detectSegment(c.label) || detectSegment(c.notes);
+}
+function segmentMatches(seg, filter) {
+  if (filter === "all") return true;
+  if (filter === "entrambi") return seg === "entrambi";
+  return seg === filter || seg === "entrambi";
+}
+
+// Accepts full URLs and bare domains ("cappellettoshop.com/..."); rejects
+// free text so a product name can't end up as a broken link.
+function normalizeUrl(input) {
+  const raw = (input || "").trim();
+  if (!raw) return null;
+  const candidate = /^https?:\/\//i.test(raw) ? raw : (/^[\w-]+(\.[\w-]+)+([\/?#]\S*)?$/.test(raw) ? "https://" + raw : null);
+  if (!candidate || /\s/.test(candidate)) return null;
+  try { const u = new URL(candidate); return u.hostname.includes(".") ? u.href : null; } catch (e) { return null; }
+}
+function isValidUrl(u) { return !!normalizeUrl(u); }
+
 function compressImage(file, maxDim, quality) {
   maxDim = maxDim || 1600;
   quality = quality || 0.8;
@@ -350,8 +579,6 @@ function compressImage(file, maxDim, quality) {
   });
 }
 
-// Forces a real "Save As" download (vs. navigating) regardless of
-// how the storage CDN sets Content-Disposition.
 async function downloadFile(url, filename) {
   const res = await fetch(url);
   const blob = await res.blob();
@@ -365,37 +592,104 @@ async function downloadFile(url, filename) {
   URL.revokeObjectURL(objectUrl);
 }
 
+function imagePublicUrl(path) { return sb.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl; }
+function heroOf(imgs) {
+  if (!imgs || !imgs.length) return null;
+  return imgs.find((i) => (i.label || "").trim().toLowerCase() === "hero") || imgs[0];
+}
+function groupBy(arr, key) {
+  const map = {};
+  arr.forEach((x) => { (map[x[key]] = map[x[key]] || []).push(x); });
+  Object.values(map).forEach((list) => list.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0) || a.id - b.id));
+  return map;
+}
+function randomKey() { return Date.now() + "-" + Math.random().toString(36).slice(2, 8); }
+function loadPref(k, fallback) { try { return localStorage.getItem(k) || fallback; } catch (e) { return fallback; } }
+function savePref(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+function useIsMobile() {
+  const query = "(max-width: 700px)";
+  const [m, setM] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const fn = () => setM(mq.matches);
+    mq.addEventListener("change", fn);
+    return () => mq.removeEventListener("change", fn);
+  }, []);
+  return m;
+}
+
+function applyRealtime(setter) {
+  return (payload) => {
+    if (payload.eventType === "INSERT") setter((prev) => prev.some((x) => x.id === payload.new.id) ? prev : [...prev, payload.new]);
+    else if (payload.eventType === "UPDATE") setter((prev) => prev.map((x) => (x.id === payload.new.id ? payload.new : x)));
+    else if (payload.eventType === "DELETE") setter((prev) => prev.filter((x) => x.id !== payload.old.id));
+  };
+}
+
 /* ── APP ────────────────────────────────────────────── */
 function App() {
   const [campaigns, setCampaigns] = useState([]);
   const [images, setImages] = useState([]);
   const [links, setLinks] = useState([]);
+  const [socialPosts, setSocialPosts] = useState([]);
+  const [socialImages, setSocialImages] = useState([]);
+  const [socialLinks, setSocialLinks] = useState([]);
+  // Schema is feature-detected so the app works before and after the
+  // year/segment/social migration is applied.
+  const [schema, setSchema] = useState({ year: true, segment: true, social: true });
   const [loading, setLoading] = useState(true);
   const [sync, setSync] = useState({ state: "hidden", message: "" });
-  const [view, setView] = useState("timeline");
+
+  const [tab, setTabState] = useState(() => loadPref("cc_tab", "email"));
+  const [view, setViewState] = useState(() => { const v = loadPref("cc_view", "timeline"); return v === "calendar" ? "calendar" : "timeline"; });
   const [search, setSearch] = useState("");
   const [activeTypes, setActiveTypes] = useState(new Set(Object.keys(TYPES)));
   const [activeStatus, setActiveStatus] = useState("all");
+  const [activeSegment, setActiveSegment] = useState("all");
+  const [showPast, setShowPast] = useState(false);
+  const [cal, setCal] = useState({ y: TODAY.getFullYear(), m: TODAY.getMonth() + 1 });
+  const [selectedDay, setSelectedDay] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
-  const [modal, setModal] = useState(null);       // null | { mode:'create' } | { mode:'edit', campaign }
+  const [selectedSocialId, setSelectedSocialId] = useState(null);
+  const [socialSearch, setSocialSearch] = useState("");
+  const [activeFormats, setActiveFormats] = useState(new Set(Object.keys(SOCIAL_FORMATS)));
+  const [mobileCol, setMobileCol] = useState("idea");
+  const [modal, setModal] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const isMobile = useIsMobile();
+
+  function setTab(t) { setTabState(t); savePref("cc_tab", t); }
+  function setView(v) { setViewState(v); savePref("cc_view", v); }
 
   const showSync = (state, message) => setSync({ state, message });
   const flashSync = (state, message) => { showSync(state, message); setTimeout(() => showSync("hidden", ""), 1800); };
 
   const load = useCallback(async () => {
-    const [campaignsRes, imagesRes, linksRes] = await Promise.all([
+    const [cRes, iRes, lRes, spRes, siRes, slRes] = await Promise.all([
       sb.from("campaigns").select("*").order("month").order("day"),
       sb.from("campaign_images").select("*").order("sort_order"),
       sb.from("campaign_links").select("*").order("sort_order"),
+      sb.from("social_posts").select("*"),
+      sb.from("social_images").select("*").order("sort_order"),
+      sb.from("social_links").select("*").order("sort_order"),
     ]);
     setLoading(false);
-    if (campaignsRes.error) { showSync("error", "Errore di connessione: " + campaignsRes.error.message); return; }
-    setCampaigns(campaignsRes.data || []);
-    setImages(imagesRes.data || []);
-    setLinks(linksRes.data || []);
-    if (imagesRes.error || linksRes.error) {
-      showSync("error", "Immagini/link non disponibili: " + (imagesRes.error || linksRes.error).message);
+    if (cRes.error) { showSync("error", "Errore di connessione: " + cRes.error.message); return; }
+    const sample = (cRes.data || [])[0];
+    setSchema({
+      year: sample ? "year" in sample : true,
+      segment: sample ? "segment" in sample : true,
+      social: !spRes.error,
+    });
+    setCampaigns(cRes.data || []);
+    setImages(iRes.data || []);
+    setLinks(lRes.data || []);
+    setSocialPosts(spRes.data || []);
+    setSocialImages(siRes.data || []);
+    setSocialLinks(slRes.data || []);
+    if (iRes.error || lRes.error) {
+      showSync("error", "Immagini/link non disponibili: " + (iRes.error || lRes.error).message);
       return;
     }
     showSync("connected", "Connesso — sincronizzazione in tempo reale");
@@ -405,53 +699,56 @@ function App() {
   useEffect(() => {
     load();
     const channel = sb.channel("db-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "campaigns" }, (payload) => {
-        if (payload.eventType === "INSERT") {
-          setCampaigns((prev) => prev.some((c) => c.id === payload.new.id) ? prev : [...prev, payload.new]);
-        } else if (payload.eventType === "UPDATE") {
-          setCampaigns((prev) => prev.map((c) => (c.id === payload.new.id ? payload.new : c)));
-        } else if (payload.eventType === "DELETE") {
-          setCampaigns((prev) => prev.filter((c) => c.id !== payload.old.id));
-          setSelectedId((sel) => (sel === payload.old.id ? null : sel));
-        }
+      .on("postgres_changes", { event: "*", schema: "public", table: "campaigns" }, (p) => {
+        applyRealtime(setCampaigns)(p);
+        if (p.eventType === "DELETE") setSelectedId((sel) => (sel === p.old.id ? null : sel));
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "campaign_images" }, (payload) => {
-        if (payload.eventType === "INSERT") {
-          setImages((prev) => prev.some((i) => i.id === payload.new.id) ? prev : [...prev, payload.new]);
-        } else if (payload.eventType === "UPDATE") {
-          setImages((prev) => prev.map((i) => (i.id === payload.new.id ? payload.new : i)));
-        } else if (payload.eventType === "DELETE") {
-          setImages((prev) => prev.filter((i) => i.id !== payload.old.id));
-        }
+      .on("postgres_changes", { event: "*", schema: "public", table: "campaign_images" }, applyRealtime(setImages))
+      .on("postgres_changes", { event: "*", schema: "public", table: "campaign_links" }, applyRealtime(setLinks))
+      .on("postgres_changes", { event: "*", schema: "public", table: "social_posts" }, (p) => {
+        applyRealtime(setSocialPosts)(p);
+        if (p.eventType === "DELETE") setSelectedSocialId((sel) => (sel === p.old.id ? null : sel));
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "campaign_links" }, (payload) => {
-        if (payload.eventType === "INSERT") {
-          setLinks((prev) => prev.some((l) => l.id === payload.new.id) ? prev : [...prev, payload.new]);
-        } else if (payload.eventType === "UPDATE") {
-          setLinks((prev) => prev.map((l) => (l.id === payload.new.id ? payload.new : l)));
-        } else if (payload.eventType === "DELETE") {
-          setLinks((prev) => prev.filter((l) => l.id !== payload.old.id));
-        }
-      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "social_images" }, applyRealtime(setSocialImages))
+      .on("postgres_changes", { event: "*", schema: "public", table: "social_links" }, applyRealtime(setSocialLinks))
       .subscribe();
     return () => sb.removeChannel(channel);
   }, [load]);
 
+  // Escape closes the topmost panel.
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key !== "Escape" || modal || deleteTarget) return;
+      setSelectedId(null);
+      setSelectedSocialId(null);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [modal, deleteTarget]);
+
+  /* ── campaigns ── */
+  function cleanCampaign(data) {
+    const out = { ...data };
+    if (!schema.year) delete out.year;
+    if (!schema.segment) delete out.segment;
+    return out;
+  }
+
   async function createCampaign(data) {
     showSync("syncing", "Salvataggio...");
-    const { data: row, error } = await sb.from("campaigns").insert([data]).select().single();
+    const { data: row, error } = await sb.from("campaigns").insert([cleanCampaign(data)]).select().single();
     if (error) { flashSync("error", "Errore: " + error.message); return null; }
     setCampaigns((prev) => prev.some((c) => c.id === row.id) ? prev : [...prev, row]);
     flashSync("connected", "Campagna salvata");
     return row;
   }
 
-  async function updateCampaign(id, data) {
+  async function updateCampaign(id, data, quietMsg) {
     showSync("syncing", "Aggiornamento...");
-    const { data: row, error } = await sb.from("campaigns").update(data).eq("id", id).select().single();
+    const { data: row, error } = await sb.from("campaigns").update(cleanCampaign(data)).eq("id", id).select().single();
     if (error) { flashSync("error", "Errore: " + error.message); return null; }
     setCampaigns((prev) => prev.map((c) => (c.id === id ? row : c)));
-    flashSync("connected", "Campagna aggiornata");
+    flashSync("connected", quietMsg || "Campagna aggiornata");
     return row;
   }
 
@@ -464,218 +761,388 @@ function App() {
     setCampaigns((prev) => prev.filter((c) => c.id !== id));
     setImages((prev) => prev.filter((i) => i.campaign_id !== id));
     setLinks((prev) => prev.filter((l) => l.campaign_id !== id));
+    setSocialPosts((prev) => prev.map((p) => (p.campaign_id === id ? { ...p, campaign_id: null } : p)));
     setSelectedId((sel) => (sel === id ? null : sel));
     flashSync("connected", "Campagna eliminata");
   }
 
   async function duplicateCampaign(c) {
     const { id, created_at, updated_at, ...rest } = c;
-    const row = await createCampaign({ ...rest, label: c.label + " (copia)" });
+    const row = await createCampaign({ ...rest, status: rest.status === "sent" ? "tbd" : rest.status, label: c.label + " (copia)" });
     if (row) setSelectedId(row.id);
   }
 
-  // items: [{ file, label }] — label falls back to "Immagine N" when blank.
-  async function uploadImages(campaignId, items) {
-    let order = images.filter((i) => i.campaign_id === campaignId).length;
+  function setCampaignStatus(c, status) {
+    if (c.status === status) return;
+    updateCampaign(c.id, { status }, "Stato: " + STATUSES[status].label);
+  }
+
+  function moveCampaign(c, y, m, d) {
+    if (yearOf(c) === y && c.month === m && c.day === d) return;
+    if (!schema.year && y !== BASE_YEAR) { flashSync("error", "Le date oltre il " + BASE_YEAR + " saranno disponibili a breve"); return; }
+    let end_day = null;
+    if (c.end_day) {
+      const span = c.end_day - c.day;
+      end_day = d + span <= daysInMonth(y, m) ? d + span : null;
+    }
+    updateCampaign(c.id, { year: y, month: m, day: d, end_day }, "Spostata a " + fmtShort(new Date(y, m - 1, d)));
+  }
+
+  /* ── social ── */
+  async function createSocial(data) {
+    showSync("syncing", "Salvataggio...");
+    const { data: row, error } = await sb.from("social_posts").insert([data]).select().single();
+    if (error) { flashSync("error", "Errore: " + error.message); return null; }
+    setSocialPosts((prev) => prev.some((p) => p.id === row.id) ? prev : [...prev, row]);
+    flashSync("connected", "Contenuto salvato");
+    return row;
+  }
+
+  async function updateSocial(id, data, quietMsg) {
+    showSync("syncing", "Aggiornamento...");
+    const { data: row, error } = await sb.from("social_posts").update({ ...data, updated_at: new Date().toISOString() }).eq("id", id).select().single();
+    if (error) { flashSync("error", "Errore: " + error.message); return null; }
+    setSocialPosts((prev) => prev.map((p) => (p.id === id ? row : p)));
+    flashSync("connected", quietMsg || "Contenuto aggiornato");
+    return row;
+  }
+
+  async function deleteSocial(id) {
+    showSync("syncing", "Eliminazione...");
+    const orphanPaths = socialImages.filter((i) => i.post_id === id).map((i) => i.storage_path);
+    if (orphanPaths.length) await sb.storage.from(STORAGE_BUCKET).remove(orphanPaths);
+    const { error } = await sb.from("social_posts").delete().eq("id", id);
+    if (error) { flashSync("error", "Errore: " + error.message); return; }
+    setSocialPosts((prev) => prev.filter((p) => p.id !== id));
+    setSocialImages((prev) => prev.filter((i) => i.post_id !== id));
+    setSocialLinks((prev) => prev.filter((l) => l.post_id !== id));
+    setSelectedSocialId((sel) => (sel === id ? null : sel));
+    flashSync("connected", "Contenuto eliminato");
+  }
+
+  function setSocialStatus(p, status) {
+    if (p.status === status) return;
+    updateSocial(p.id, { status }, "Spostato in " + SOCIAL_STATUSES[status].label);
+  }
+
+  function moveSocialDate(p, iso) {
+    if (p.publish_date === iso) return;
+    updateSocial(p.id, { publish_date: iso }, "Pubblicazione: " + fmtShort(new Date(iso + "T00:00:00")));
+  }
+
+  /* ── attachments (shared by campaigns and social posts) ── */
+  const imageState = { campaign: images, social: socialImages };
+  const imageSetter = { campaign: setImages, social: setSocialImages };
+  const linkState = { campaign: links, social: socialLinks };
+  const linkSetter = { campaign: setLinks, social: setSocialLinks };
+
+  // items: [{ file, label }]
+  async function uploadImagesFor(kind, ownerId, items) {
+    const cfg = ATTACH[kind];
+    let order = imageState[kind].filter((i) => i[cfg.fk] === ownerId).length;
+    let ok = 0;
     for (const item of items) {
       const file = item.file || item;
-      const providedLabel = (item.label || "").trim();
       showSync("syncing", "Caricamento immagine...");
       try {
         const blob = await compressImage(file);
-        const path = campaignId + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + ".jpg";
+        const path = cfg.prefix + ownerId + "/" + randomKey() + ".jpg";
         const { error: upErr } = await sb.storage.from(STORAGE_BUCKET).upload(path, blob, { contentType: "image/jpeg" });
         if (upErr) throw upErr;
-        const label = providedLabel || ("Immagine " + (order + 1));
-        const { data: row, error: insErr } = await sb.from("campaign_images")
-          .insert([{ campaign_id: campaignId, storage_path: path, label: label, sort_order: order }])
+        const { data: row, error: insErr } = await sb.from(cfg.images)
+          .insert([{ [cfg.fk]: ownerId, storage_path: path, label: (item.label || "").trim(), sort_order: order }])
           .select().single();
         if (insErr) throw insErr;
-        order++;
-        setImages((prev) => prev.some((i) => i.id === row.id) ? prev : [...prev, row]);
+        order++; ok++;
+        imageSetter[kind]((prev) => prev.some((i) => i.id === row.id) ? prev : [...prev, row]);
       } catch (err) {
         flashSync("error", "Errore upload: " + err.message);
       }
     }
-    flashSync("connected", "Immagini caricate");
+    if (ok) flashSync("connected", ok === 1 ? "Immagine caricata" : ok + " immagini caricate");
   }
 
-  async function updateImageLabel(imageId, label) {
-    const { data: row, error } = await sb.from("campaign_images").update({ label }).eq("id", imageId).select().single();
+  async function updateImageLabelFor(kind, imageId, label) {
+    const { data: row, error } = await sb.from(ATTACH[kind].images).update({ label }).eq("id", imageId).select().single();
     if (error) { flashSync("error", "Errore: " + error.message); return; }
-    setImages((prev) => prev.map((i) => (i.id === imageId ? row : i)));
+    imageSetter[kind]((prev) => prev.map((i) => (i.id === imageId ? row : i)));
   }
 
-  async function deleteImage(image) {
+  async function deleteImageFor(kind, image) {
     showSync("syncing", "Eliminazione immagine...");
     await sb.storage.from(STORAGE_BUCKET).remove([image.storage_path]);
-    const { error } = await sb.from("campaign_images").delete().eq("id", image.id);
+    const { error } = await sb.from(ATTACH[kind].images).delete().eq("id", image.id);
     if (error) { flashSync("error", "Errore: " + error.message); return; }
-    setImages((prev) => prev.filter((i) => i.id !== image.id));
+    imageSetter[kind]((prev) => prev.filter((i) => i.id !== image.id));
     flashSync("connected", "Immagine eliminata");
   }
 
-  async function addLink(campaignId, label, url) {
-    if (!url.trim()) return;
+  async function addLinkFor(kind, ownerId, label, url) {
+    const cfg = ATTACH[kind];
     showSync("syncing", "Salvataggio link...");
-    const order = links.filter((l) => l.campaign_id === campaignId).length;
-    const { data: row, error } = await sb.from("campaign_links")
-      .insert([{ campaign_id: campaignId, label: label.trim(), url: url.trim(), sort_order: order }])
+    const order = linkState[kind].filter((l) => l[cfg.fk] === ownerId).length;
+    const { data: row, error } = await sb.from(cfg.links)
+      .insert([{ [cfg.fk]: ownerId, label: (label || "").trim(), url, sort_order: order }])
       .select().single();
     if (error) { flashSync("error", "Errore: " + error.message); return; }
-    setLinks((prev) => prev.some((l) => l.id === row.id) ? prev : [...prev, row]);
+    linkSetter[kind]((prev) => prev.some((l) => l.id === row.id) ? prev : [...prev, row]);
     flashSync("connected", "Link aggiunto");
   }
 
-  async function deleteLink(id) {
-    const { error } = await sb.from("campaign_links").delete().eq("id", id);
+  async function deleteLinkFor(kind, id) {
+    const { error } = await sb.from(ATTACH[kind].links).delete().eq("id", id);
     if (error) { flashSync("error", "Errore: " + error.message); return; }
-    setLinks((prev) => prev.filter((l) => l.id !== id));
+    linkSetter[kind]((prev) => prev.filter((l) => l.id !== id));
   }
+
+  /* ── derived ── */
+  const imagesByCampaign = useMemo(() => groupBy(images, "campaign_id"), [images]);
+  const linksByCampaign = useMemo(() => groupBy(links, "campaign_id"), [links]);
+  const imagesByPost = useMemo(() => groupBy(socialImages, "post_id"), [socialImages]);
+  const linksByPost = useMemo(() => groupBy(socialLinks, "post_id"), [socialLinks]);
+  const socialByCampaign = useMemo(() => groupBy(socialPosts.filter((p) => p.campaign_id), "campaign_id"), [socialPosts]);
+  const campaignById = useMemo(() => { const m = {}; campaigns.forEach((c) => { m[c.id] = c; }); return m; }, [campaigns]);
+
+  function campaignThumb(id) { const h = heroOf(imagesByCampaign[id]); return h ? imagePublicUrl(h.storage_path) : null; }
+  function socialThumb(id) { const h = heroOf(imagesByPost[id]); return h ? imagePublicUrl(h.storage_path) : null; }
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return campaigns.filter((c) => {
-      if (!activeTypes.has(c.type)) return false;
+      if (!activeTypes.has(typeKey(c))) return false;
       if (activeStatus !== "all" && c.status !== activeStatus) return false;
+      if (!segmentMatches(segmentOf(c), activeSegment)) return false;
       if (q && !(c.label || "").toLowerCase().includes(q) && !(c.notes || "").toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [campaigns, activeTypes, activeStatus, search]);
+  }, [campaigns, activeTypes, activeStatus, activeSegment, search]);
+
+  const filteredSocial = useMemo(() => {
+    const q = socialSearch.trim().toLowerCase();
+    return socialPosts.filter((p) => {
+      if (!activeFormats.has(SOCIAL_FORMATS[p.format] ? p.format : "other")) return false;
+      if (q && !(p.title || "").toLowerCase().includes(q) && !(p.notes || "").toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [socialPosts, socialSearch, activeFormats]);
 
   const typeCounts = useMemo(() => {
     const counts = {};
-    Object.keys(TYPES).forEach((t) => { counts[t] = campaigns.filter((c) => c.type === t).length; });
+    Object.keys(TYPES).forEach((t) => { counts[t] = 0; });
+    campaigns.forEach((c) => { counts[typeKey(c)]++; });
     return counts;
   }, [campaigns]);
 
-  const stats = useMemo(() => ({
-    total: campaigns.length,
-    confirmed: campaigns.filter((c) => c.status === "confirmed").length,
-    planned: campaigns.filter((c) => c.status === "planned").length,
-    tbd: campaigns.filter((c) => c.status === "tbd").length,
-  }), [campaigns]);
+  const stats = useMemo(() => {
+    const s = { total: campaigns.length, toMark: 0 };
+    STATUS_ORDER.forEach((k) => { s[k] = 0; });
+    campaigns.forEach((c) => { if (s[c.status] !== undefined) s[c.status]++; if (needsSentMark(c)) s.toMark++; });
+    return s;
+  }, [campaigns]);
+
+  const socialStats = useMemo(() => {
+    const s = { total: socialPosts.length };
+    SOCIAL_ORDER.forEach((k) => { s[k] = socialPosts.filter((p) => p.status === k).length; });
+    return s;
+  }, [socialPosts]);
 
   const selected = campaigns.find((c) => c.id === selectedId) || null;
+  const selectedSocial = socialPosts.find((p) => p.id === selectedSocialId) || null;
 
-  const imagesByCampaign = useMemo(() => {
-    const map = {};
-    images.forEach((img) => { (map[img.campaign_id] = map[img.campaign_id] || []).push(img); });
-    Object.values(map).forEach((arr) => arr.sort((a, b) => a.sort_order - b.sort_order || a.id - b.id));
-    return map;
-  }, [images]);
-
-  const linksByCampaign = useMemo(() => {
-    const map = {};
-    links.forEach((l) => { (map[l.campaign_id] = map[l.campaign_id] || []).push(l); });
-    Object.values(map).forEach((arr) => arr.sort((a, b) => a.sort_order - b.sort_order || a.id - b.id));
-    return map;
-  }, [links]);
-
-  function imagePublicUrl(path) {
-    return sb.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl;
+  function toggleInSet(setter, key) {
+    setter((prev) => { const next = new Set(prev); next.has(key) ? next.delete(key) : next.add(key); return next; });
   }
 
-  function getThumbUrl(campaignId) {
-    const imgs = imagesByCampaign[campaignId];
-    if (!imgs || !imgs.length) return null;
-    const hero = imgs.find((i) => (i.label || "").trim().toLowerCase() === "hero") || imgs[0];
-    return imagePublicUrl(hero.storage_path);
+  function selectCampaign(id) { setSelectedSocialId(null); setSelectedId(id); }
+  function selectSocial(id) { setSelectedId(null); setSelectedSocialId(id); }
+  function openCampaignFromSocial(id) { setTab("email"); setSelectedSocialId(null); setSelectedId(id); }
+  function openSocialFromCampaign(id) { setTab("social"); setSelectedId(null); setSelectedSocialId(id); const p = socialPosts.find((x) => x.id === id); if (p) setMobileCol(p.status); }
+
+  function openCreate(presetDate) {
+    if (tab === "social") { setModal({ kind: "social", mode: "create", presetDate }); setSelectedSocialId(null); }
+    else { setModal({ kind: "campaign", mode: "create", presetDate }); setSelectedId(null); }
   }
 
-  function toggleType(t) {
-    setActiveTypes((prev) => {
-      const next = new Set(prev);
-      next.has(t) ? next.delete(t) : next.add(t);
-      return next;
-    });
-  }
-
-  function openCreate() { setModal({ mode: "create" }); setSelectedId(null); }
-  function openEdit(c) { setModal({ mode: "edit", campaign: c }); setSelectedId(null); }
-
-  // stagedImages: [{ file, label }], stagedLinks: [{ label, url }] — only
-  // relevant on create, where the campaign id doesn't exist until after
-  // the insert. If the campaign insert fails, attachments are never
-  // attempted.
-  async function handleSubmit(data, editId, stagedImages, stagedLinks) {
-    if (editId) {
-      await updateCampaign(editId, data);
-      setModal(null);
-      return;
-    }
+  async function handleSubmitCampaign(data, editId, stagedImages, stagedLinks) {
+    if (editId) { await updateCampaign(editId, data); setModal(null); return; }
     const row = await createCampaign(data);
     if (!row) { setModal(null); return; }
     setSelectedId(row.id);
-    if (stagedImages && stagedImages.length) {
-      await uploadImages(row.id, stagedImages.map((s) => ({ file: s.file, label: s.label })));
-    }
-    if (stagedLinks && stagedLinks.length) {
-      for (const l of stagedLinks) await addLink(row.id, l.label, l.url);
-    }
+    if (stagedImages.length) await uploadImagesFor("campaign", row.id, stagedImages);
+    for (const l of stagedLinks) await addLinkFor("campaign", row.id, l.label, l.url);
     setModal(null);
   }
+
+  async function handleSubmitSocial(data, editId, stagedImages, stagedLinks) {
+    if (editId) { await updateSocial(editId, data); setModal(null); return; }
+    const row = await createSocial(data);
+    if (!row) { setModal(null); return; }
+    setSelectedSocialId(row.id);
+    setMobileCol(row.status);
+    if (stagedImages.length) await uploadImagesFor("social", row.id, stagedImages);
+    for (const l of stagedLinks) await addLinkFor("social", row.id, l.label, l.url);
+    setModal(null);
+  }
+
+  const attachHandlers = {
+    getImageUrl: imagePublicUrl,
+    onUploadImages: uploadImagesFor,
+    onUpdateImageLabel: updateImageLabelFor,
+    onDeleteImage: deleteImageFor,
+    onAddLink: addLinkFor,
+    onDeleteLink: deleteLinkFor,
+  };
 
   return (
     <React.Fragment>
       <div className={"sync-bar " + sync.state}>{sync.message}</div>
 
-      <TopBar stats={stats} onNew={openCreate} />
-
-      <Toolbar
-        view={view} setView={setView}
-        search={search} setSearch={setSearch}
-        activeStatus={activeStatus} setActiveStatus={setActiveStatus}
-        activeTypes={activeTypes} toggleType={toggleType}
-        typeCounts={typeCounts}
+      <TopBar
+        tab={tab} setTab={setTab}
+        stats={stats} socialStats={socialStats}
+        onNew={() => openCreate()}
+        socialReady={schema.social}
+        onShowToMark={() => { setTab("email"); setView("timeline"); setShowPast(true); setActiveStatus("all"); }}
       />
+
+      {tab === "email" ? (
+        <EmailToolbar
+          view={view} setView={setView}
+          search={search} setSearch={setSearch}
+          activeStatus={activeStatus} setActiveStatus={setActiveStatus}
+          activeSegment={activeSegment} setActiveSegment={setActiveSegment}
+          activeTypes={activeTypes} toggleType={(t) => toggleInSet(setActiveTypes, t)}
+          typeCounts={typeCounts}
+        />
+      ) : (
+        <SocialToolbar
+          search={socialSearch} setSearch={setSocialSearch}
+          activeFormats={activeFormats} toggleFormat={(f) => toggleInSet(setActiveFormats, f)}
+          posts={socialPosts}
+        />
+      )}
 
       <div className="content">
         {loading ? (
-          <div className="loading-box"><div className="spinner"></div><div>Caricamento campagne...</div></div>
-        ) : view === "timeline" ? (
-          <TimelineView campaigns={filtered} selectedId={selectedId} onSelect={setSelectedId} getThumbUrl={getThumbUrl} />
+          <div className="loading-box"><div className="spinner"></div><div>Caricamento...</div></div>
+        ) : tab === "email" ? (
+          view === "timeline" ? (
+            <TimelineView
+              campaigns={filtered}
+              selectedId={selectedId}
+              onSelect={(id) => selectCampaign(selectedId === id ? null : id)}
+              getThumbUrl={campaignThumb}
+              onStatus={setCampaignStatus}
+              showPast={showPast} setShowPast={setShowPast}
+              socialByCampaign={socialByCampaign}
+            />
+          ) : (
+            <CalendarView
+              campaigns={filtered}
+              socialPosts={schema.social ? filteredSocial.filter((p) => p.publish_date) : []}
+              cal={cal} setCal={setCal}
+              selectedId={selectedId}
+              onSelect={selectCampaign}
+              onSelectSocial={openSocialFromCampaign}
+              onMove={moveCampaign}
+              onMoveSocial={moveSocialDate}
+              onCreateAt={(iso) => openCreate(iso)}
+              getThumbUrl={campaignThumb}
+              onStatus={setCampaignStatus}
+              selectedDay={selectedDay} setSelectedDay={setSelectedDay}
+              socialByCampaign={socialByCampaign}
+              isMobile={isMobile}
+              yearLimited={!schema.year}
+            />
+          )
+        ) : schema.social ? (
+          <SocialBoard
+            posts={filteredSocial}
+            selectedId={selectedSocialId}
+            onSelect={(id) => selectSocial(selectedSocialId === id ? null : id)}
+            onMoveStatus={setSocialStatus}
+            getThumbUrl={socialThumb}
+            imagesByPost={imagesByPost}
+            linksByPost={linksByPost}
+            campaignById={campaignById}
+            isMobile={isMobile}
+            mobileCol={mobileCol} setMobileCol={setMobileCol}
+          />
         ) : (
-          <GridView campaigns={filtered} selectedId={selectedId} onSelect={setSelectedId} getThumbUrl={getThumbUrl} />
+          <div className="notice-box">
+            <strong>Social &amp; Inspo è in attivazione.</strong><br />
+            Lo spazio per i contenuti da realizzare sarà disponibile a breve.
+          </div>
         )}
-        <Legend />
+        {tab === "email" && !loading && <Legend />}
       </div>
 
-      {selected && !modal && (
+      {tab === "email" && selected && !modal && (
         <DetailPanel
           campaign={selected}
           images={imagesByCampaign[selected.id] || []}
           links={linksByCampaign[selected.id] || []}
-          getImageUrl={imagePublicUrl}
+          linkedSocial={socialByCampaign[selected.id] || []}
+          onOpenSocial={openSocialFromCampaign}
+          onStatus={(s) => setCampaignStatus(selected, s)}
           onClose={() => setSelectedId(null)}
-          onEdit={() => openEdit(selected)}
+          onEdit={() => { setModal({ kind: "campaign", mode: "edit", campaign: selected }); setSelectedId(null); }}
           onDuplicate={() => duplicateCampaign(selected)}
-          onDelete={() => setDeleteTarget(selected)}
+          onDelete={() => setDeleteTarget({ kind: "campaign", item: selected })}
         />
       )}
 
-      {modal && (
+      {tab === "social" && selectedSocial && !modal && (
+        <SocialDetailPanel
+          post={selectedSocial}
+          images={imagesByPost[selectedSocial.id] || []}
+          links={linksByPost[selectedSocial.id] || []}
+          campaign={selectedSocial.campaign_id ? campaignById[selectedSocial.campaign_id] : null}
+          onOpenCampaign={openCampaignFromSocial}
+          onStatus={(s) => setSocialStatus(selectedSocial, s)}
+          onClose={() => setSelectedSocialId(null)}
+          onEdit={() => { setModal({ kind: "social", mode: "edit", post: selectedSocial }); setSelectedSocialId(null); }}
+          onDelete={() => setDeleteTarget({ kind: "social", item: selectedSocial })}
+        />
+      )}
+
+      {modal && modal.kind === "campaign" && (
         <CampaignModal
-          initial={modal.mode === "edit" ? modal.campaign : emptyForm()}
+          initial={modal.mode === "edit" ? modal.campaign : null}
+          presetDate={modal.presetDate}
           editId={modal.mode === "edit" ? modal.campaign.id : null}
           campaignImages={modal.mode === "edit" ? (imagesByCampaign[modal.campaign.id] || []) : []}
           campaignLinks={modal.mode === "edit" ? (linksByCampaign[modal.campaign.id] || []) : []}
-          getImageUrl={imagePublicUrl}
-          onUploadImages={uploadImages}
-          onUpdateImageLabel={updateImageLabel}
-          onDeleteImage={deleteImage}
-          onAddLink={addLink}
-          onDeleteLink={deleteLink}
+          yearLimited={!schema.year}
+          handlers={attachHandlers}
           onCancel={() => setModal(null)}
-          onSubmit={handleSubmit}
+          onSubmit={handleSubmitCampaign}
+        />
+      )}
+
+      {modal && modal.kind === "social" && (
+        <SocialModal
+          initial={modal.mode === "edit" ? modal.post : null}
+          presetDate={modal.presetDate}
+          editId={modal.mode === "edit" ? modal.post.id : null}
+          postImages={modal.mode === "edit" ? (imagesByPost[modal.post.id] || []) : []}
+          postLinks={modal.mode === "edit" ? (linksByPost[modal.post.id] || []) : []}
+          campaigns={campaigns}
+          handlers={attachHandlers}
+          onCancel={() => setModal(null)}
+          onSubmit={handleSubmitSocial}
         />
       )}
 
       {deleteTarget && (
         <ConfirmDeleteModal
-          campaign={deleteTarget}
+          title={deleteTarget.kind === "campaign" ? deleteTarget.item.label : deleteTarget.item.title}
           onCancel={() => setDeleteTarget(null)}
-          onConfirm={async () => { await deleteCampaign(deleteTarget.id); setDeleteTarget(null); }}
+          onConfirm={async () => {
+            if (deleteTarget.kind === "campaign") await deleteCampaign(deleteTarget.item.id);
+            else await deleteSocial(deleteTarget.item.id);
+            setDeleteTarget(null);
+          }}
         />
       )}
     </React.Fragment>
@@ -683,70 +1150,92 @@ function App() {
 }
 
 /* ── TOPBAR ─────────────────────────────────────────── */
-function TopBar({ stats, onNew }) {
+function TopBar({ tab, setTab, stats, socialStats, onNew, socialReady, onShowToMark }) {
   return (
     <div className="topbar">
       <div className="topbar-inner">
         <div className="topbar-left">
           <img src="logo.png" alt="CappellettoShop" className="topbar-logo" />
           <div className="topbar-title">
-            <h1>Calendario Campagne Email</h1>
-            <span>Agosto – Dicembre 2026</span>
+            <h1>Calendario Campagne</h1>
+            <span>Email &amp; Social</span>
           </div>
         </div>
-        <button className="btn-new" onClick={onNew}>
-          <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> Nuova Campagna
+        <button className="btn-new" onClick={onNew} disabled={tab === "social" && !socialReady}>
+          <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> {tab === "social" ? "Nuovo Contenuto" : "Nuova Campagna"}
         </button>
       </div>
       <div className="topbar-stats">
-        <span><strong>{stats.total}</strong> campagne totali</span>
-        <span className="sep">|</span>
-        <span><strong style={{ color: STATUSES.confirmed.color }}>{stats.confirmed}</strong> confermate</span>
-        <span className="sep">|</span>
-        <span><strong style={{ color: STATUSES.planned.color }}>{stats.planned}</strong> pianificate</span>
-        <span className="sep">|</span>
-        <span><strong style={{ color: STATUSES.tbd.color }}>{stats.tbd}</strong> da confermare</span>
+        {tab === "email" ? (
+          <React.Fragment>
+            <span><strong>{stats.total}</strong> campagne</span>
+            {["tbd", "planned", "confirmed", "sent"].map((k) => (
+              <React.Fragment key={k}>
+                <span className="sep">|</span>
+                <span><strong style={{ color: k === "sent" ? "#bbb" : STATUSES[k].color }}>{stats[k]}</strong> {{ tbd: "da confermare", planned: "pianificate", confirmed: "confermate", sent: "inviate" }[k]}</span>
+              </React.Fragment>
+            ))}
+            {stats.toMark > 0 && (
+              <React.Fragment>
+                <span className="sep">|</span>
+                <button className="link-btn warn" style={{ color: "#FB8C00", borderColor: "#FB8C00", fontWeight: 500 }} onClick={onShowToMark}>
+                  {stats.toMark} passate da segnare come inviate
+                </button>
+              </React.Fragment>
+            )}
+          </React.Fragment>
+        ) : (
+          <React.Fragment>
+            <span><strong>{socialStats.total}</strong> contenuti</span>
+            {SOCIAL_ORDER.map((k) => (
+              <React.Fragment key={k}>
+                <span className="sep">|</span>
+                <span><strong>{socialStats[k]}</strong> {SOCIAL_STATUSES[k].label.toLowerCase()}</span>
+              </React.Fragment>
+            ))}
+          </React.Fragment>
+        )}
+      </div>
+      <div className="main-tabs">
+        <button className={"main-tab" + (tab === "email" ? " active" : "")} onClick={() => setTab("email")}>
+          Email<span className="count">{stats.total}</span>
+        </button>
+        <button className={"main-tab" + (tab === "social" ? " active" : "")} onClick={() => setTab("social")}>
+          Social &amp; Inspo<span className="count">{socialStats.total}</span>
+        </button>
       </div>
     </div>
   );
 }
 
-/* ── TOOLBAR ────────────────────────────────────────── */
-function Toolbar({ view, setView, search, setSearch, activeStatus, setActiveStatus, activeTypes, toggleType, typeCounts }) {
+/* ── TOOLBARS ───────────────────────────────────────── */
+function EmailToolbar({ view, setView, search, setSearch, activeStatus, setActiveStatus, activeSegment, setActiveSegment, activeTypes, toggleType, typeCounts }) {
   return (
     <div className="toolbar">
       <div className="toolbar-inner">
-        <input
-          className="search-input"
-          placeholder="Cerca campagna..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        <input className="search-input" placeholder="Cerca campagna..." value={search} onChange={(e) => setSearch(e.target.value)} />
         <div className="view-toggle">
           <button className={"btn-toggle" + (view === "timeline" ? " active" : "")} onClick={() => setView("timeline")}>Timeline</button>
-          <button className={"btn-toggle" + (view === "grid" ? " active" : "")} onClick={() => setView("grid")}>Griglia</button>
+          <button className={"btn-toggle" + (view === "calendar" ? " active" : "")} onClick={() => setView("calendar")}>Calendario</button>
         </div>
         <div className="status-group">
-          {["all", "confirmed", "planned", "tbd"].map((s) => (
-            <button
-              key={s}
-              className={"btn-status" + (activeStatus === s ? " active" : "")}
-              onClick={() => setActiveStatus(s)}
-            >
-              {s === "all" ? "Tutti" : STATUSES[s].label}
+          <button className={"btn-status" + (activeStatus === "all" ? " active" : "")} onClick={() => setActiveStatus("all")}>Tutti</button>
+          {STATUS_ORDER.map((s) => (
+            <button key={s} className={"btn-status" + (activeStatus === s ? " active" : "")} onClick={() => setActiveStatus(s)}>
+              <span className="status-dot" style={statusDotStyle(s)}></span>{STATUSES[s].label}
             </button>
+          ))}
+        </div>
+        <div className="status-group">
+          {[["all", "Tutti i segmenti"], ["uomo", "Uomo"], ["donna", "Donna"], ["entrambi", "Uomo + Donna"]].map(([k, l]) => (
+            <button key={k} className={"btn-status" + (activeSegment === k ? " active" : "")} onClick={() => setActiveSegment(k)}>{l}</button>
           ))}
         </div>
       </div>
       <div className="type-pills">
         {Object.entries(TYPES).map(([key, cfg]) => (
-          <button
-            key={key}
-            className={"type-pill" + (activeTypes.has(key) ? " active" : "")}
-            onClick={() => toggleType(key)}
-          >
-            {cfg.label}
-            <span className="count">({typeCounts[key] || 0})</span>
+          <button key={key} className={"type-pill" + (activeTypes.has(key) ? " active" : "")} onClick={() => toggleType(key)}>
+            {cfg.label}<span className="count">({typeCounts[key] || 0})</span>
           </button>
         ))}
       </div>
@@ -754,87 +1243,297 @@ function Toolbar({ view, setView, search, setSearch, activeStatus, setActiveStat
   );
 }
 
-/* ── TIMELINE VIEW ──────────────────────────────────── */
-function TimelineView({ campaigns, selectedId, onSelect, getThumbUrl }) {
+function SocialToolbar({ search, setSearch, activeFormats, toggleFormat, posts }) {
+  return (
+    <div className="toolbar">
+      <div className="toolbar-inner">
+        <input className="search-input" placeholder="Cerca contenuto..." value={search} onChange={(e) => setSearch(e.target.value)} />
+      </div>
+      <div className="type-pills">
+        {Object.entries(SOCIAL_FORMATS).map(([k, l]) => (
+          <button key={k} className={"type-pill" + (activeFormats.has(k) ? " active" : "")} onClick={() => toggleFormat(k)}>
+            {l}<span className="count">({posts.filter((p) => (SOCIAL_FORMATS[p.format] ? p.format : "other") === k).length})</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── STATUS CONTROL (inline quick change) ───────────── */
+function StatusControl({ status, onChange }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    function onDoc(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("touchstart", onDoc);
+    return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("touchstart", onDoc); };
+  }, [open]);
+  return (
+    <span className="status-wrap" ref={ref} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+      <button type="button" className="status-btn" title={"Stato: " + (STATUSES[status] || STATUSES.tbd).label + " — clicca per cambiare"} onClick={() => setOpen((o) => !o)}>
+        <span className="status-dot" style={statusDotStyle(status)}></span>
+      </button>
+      {open && (
+        <div className="status-menu">
+          <div className="status-menu-title">Cambia stato</div>
+          {STATUS_ORDER.map((s) => (
+            <button type="button" key={s} className={status === s ? "current" : ""} onClick={() => { setOpen(false); onChange(s); }}>
+              <span className="status-dot" style={statusDotStyle(s)}></span>{STATUSES[s].label}{status === s ? " ✓" : ""}
+            </button>
+          ))}
+        </div>
+      )}
+    </span>
+  );
+}
+
+/* ── CAMPAIGN ROW ───────────────────────────────────── */
+function CampaignRow({ c, selected, onSelect, thumbUrl, onStatus, linkedCount }) {
+  const d = dateOf(c);
+  const seg = segmentOf(c);
+  const past = isPast(c);
+  return (
+    <div
+      className={"campaign-row" + (selected ? " selected" : "") + (past ? " is-past" : "")}
+      style={statusBorderLeft(c.status)}
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelect(c.id)}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(c.id); } }}
+    >
+      <span className="day"><b>{WEEKDAY_SHORT[d.getDay()]}</b>{pad2(c.day)}{c.end_day ? "–" + pad2(c.end_day) : ""}</span>
+      <span className={"thumb-slot" + (thumbUrl ? "" : " empty")}>{thumbUrl && <img src={thumbUrl} className="thumb" alt="" />}</span>
+      <span className="type-badge">{typeOf(c).label}</span>
+      <span className={"seg-chip" + (seg ? "" : " empty")}>{seg ? SEGMENTS[seg].short : "–"}</span>
+      <span className="name">
+        {c.label}
+        {past && c.status !== "sent" && <span className="past-flag">da segnare</span>}
+      </span>
+      {linkedCount > 0 && <span className="linked-count">{linkedCount} social</span>}
+      <StatusControl status={c.status} onChange={(s) => onStatus(c, s)} />
+    </div>
+  );
+}
+
+/* ── TIMELINE ───────────────────────────────────────── */
+function TimelineView({ campaigns, selectedId, onSelect, getThumbUrl, onStatus, showPast, setShowPast, socialByCampaign }) {
+  const curKey = monthKey(TODAY.getFullYear(), TODAY.getMonth() + 1);
+  const keys = campaigns.map((c) => monthKey(yearOf(c), c.month));
+  const minK = Math.min(curKey, ...keys);
+  const maxK = Math.max(curKey + 2, ...keys);
+  const allMonths = [];
+  for (let k = minK; k <= maxK; k++) allMonths.push(k);
+  const pastMonths = allMonths.filter((k) => k < curKey);
+  const pastCampaigns = campaigns.filter((c) => monthKey(yearOf(c), c.month) < curKey);
+  const pastToMark = pastCampaigns.filter((c) => c.status !== "sent").length;
+  const visible = showPast ? allMonths : allMonths.filter((k) => k >= curKey);
+
   return (
     <React.Fragment>
-      {MONTHS.map((m) => {
-        const items = campaigns.filter((c) => c.month === m.n).sort((a, b) => a.day - b.day);
+      {pastMonths.length > 0 && (
+        <button className="past-toggle" onClick={() => setShowPast(!showPast)}>
+          <span>
+            {showPast ? "▾ Nascondi mesi passati" : "▸ Mostra mesi passati"}
+            {" · "}<strong>{pastCampaigns.length}</strong> campagne
+            {pastToMark > 0 && <span className="warn"> · {pastToMark} da segnare come inviate</span>}
+          </span>
+          <span>{MONTH_NAMES[keyToYM(pastMonths[0]).m - 1]} – {MONTH_NAMES[keyToYM(pastMonths[pastMonths.length - 1]).m - 1]}</span>
+        </button>
+      )}
+      {visible.map((k) => {
+        const { y, m } = keyToYM(k);
+        const items = campaigns.filter((c) => yearOf(c) === y && c.month === m).sort((a, b) => a.day - b.day || a.id - b.id);
         return (
-          <div className="month-section" key={m.n}>
-            <div className="month-header">
-              <h2>{m.name}</h2>
-              <span className="count">{items.length} campagn{items.length === 1 ? "a" : "e"}</span>
-            </div>
-            {items.length === 0 ? (
-              <div className="month-empty">Nessuna campagna pianificata</div>
-            ) : (
-              <div className="campaign-list">
-                {items.map((c) => {
-                  const tc = typeOf(c);
-                  const thumbUrl = getThumbUrl(c.id);
-                  return (
-                    <button
-                      key={c.id}
-                      className={"campaign-row" + (selectedId === c.id ? " selected" : "")}
-                      style={statusBorderLeft(c.status)}
-                      onClick={() => onSelect(selectedId === c.id ? null : c.id)}
-                    >
-                      <span className="day">{String(c.day).padStart(2, "0")}{c.end_day ? "–" + String(c.end_day).padStart(2, "0") : ""}</span>
-                      {thumbUrl && <img src={thumbUrl} className="thumb" alt="" />}
-                      <span className="type-badge">{tc.label}</span>
-                      <span className="name">{c.label}</span>
-                      <span className="status-dot" style={statusDotStyle(c.status)}></span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <MonthSection
+            key={k} y={y} m={m} items={items} isCurrent={k === curKey}
+            selectedId={selectedId} onSelect={onSelect} getThumbUrl={getThumbUrl} onStatus={onStatus}
+            socialByCampaign={socialByCampaign}
+          />
         );
       })}
     </React.Fragment>
   );
 }
 
-/* ── GRID VIEW ──────────────────────────────────────── */
-function GridView({ campaigns, selectedId, onSelect, getThumbUrl }) {
+function MonthSection({ y, m, items, isCurrent, selectedId, onSelect, getThumbUrl, onStatus, socialByCampaign }) {
+  const nodes = [];
+  let needToday = isCurrent;
+  let prevWeek = null;
+  const todayNode = <div className="today-line" key="today">Oggi · {fmtShort(TODAY)}</div>;
+  items.forEach((c) => {
+    const d = dateOf(c);
+    const ws = weekStart(d).getTime();
+    if (ws !== prevWeek) {
+      if (needToday && ws > weekStart(TODAY).getTime()) { nodes.push(todayNode); needToday = false; }
+      nodes.push(<div className="week-label" key={"w" + ws}>{weekLabel(new Date(ws))}</div>);
+      prevWeek = ws;
+    }
+    if (needToday && d >= TODAY) { nodes.push(todayNode); needToday = false; }
+    nodes.push(
+      <CampaignRow
+        key={c.id} c={c} selected={selectedId === c.id} onSelect={onSelect}
+        thumbUrl={getThumbUrl(c.id)} onStatus={onStatus}
+        linkedCount={(socialByCampaign[c.id] || []).length}
+      />
+    );
+  });
+  if (needToday) nodes.push(todayNode);
+
   return (
-    <div className="grid">
-      {MONTHS.map((m) => {
-        const items = campaigns.filter((c) => c.month === m.n).sort((a, b) => a.day - b.day);
-        return (
-          <div className="grid-card" key={m.n}>
-            <div className="grid-card-header">
-              <span className="name">{m.name}</span>
-              <span className="count">{items.length}</span>
-            </div>
-            {items.length === 0 ? (
-              <div className="grid-empty">Nessuna campagna</div>
-            ) : (
-              items.map((c) => {
-                const thumbUrl = getThumbUrl(c.id);
-                return (
-                  <button
-                    key={c.id}
-                    className="grid-row"
-                    style={{ ...statusBorderLeft(c.status), background: selectedId === c.id ? "#f8f8f8" : "none" }}
-                    onClick={() => onSelect(selectedId === c.id ? null : c.id)}
-                  >
-                    <span className="day">{c.day}</span>
-                    {thumbUrl && <img src={thumbUrl} className="thumb" alt="" />}
-                    <span className="name">{c.label}</span>
-                    <span className="status-dot" style={statusDotStyle(c.status)}></span>
-                  </button>
-                );
-              })
-            )}
-          </div>
-        );
-      })}
+    <div className="month-section">
+      <div className="month-header">
+        <h2>{MONTH_NAMES[m - 1]} {y}</h2>
+        <span className="count">{items.length} campagn{items.length === 1 ? "a" : "e"}</span>
+        {isCurrent && <span className="month-now">mese corrente</span>}
+      </div>
+      {items.length === 0 && <div className="month-empty">Nessuna campagna pianificata</div>}
+      <div className="campaign-list">{nodes}</div>
     </div>
   );
 }
+
+/* ── CALENDAR (month grid with drag & drop) ─────────── */
+function CalendarView({ campaigns, socialPosts, cal, setCal, selectedId, onSelect, onSelectSocial, onMove, onMoveSocial, onCreateAt, getThumbUrl, onStatus, selectedDay, setSelectedDay, socialByCampaign, isMobile, yearLimited }) {
+  const [dragOver, setDragOver] = useState(null);
+  const first = new Date(cal.y, cal.m - 1, 1);
+  const offset = (first.getDay() + 6) % 7;
+  const total = Math.ceil((offset + daysInMonth(cal.y, cal.m)) / 7) * 7;
+  const gridStart = addDays(first, -offset);
+  const cells = [];
+  for (let i = 0; i < total; i++) cells.push(addDays(gridStart, i));
+
+  const byDay = {};
+  campaigns.forEach((c) => { const k = isoOf(dateOf(c)); (byDay[k] = byDay[k] || []).push(c); });
+  const socialByDay = {};
+  socialPosts.forEach((p) => { (socialByDay[p.publish_date] = socialByDay[p.publish_date] || []).push(p); });
+
+  function shift(n) {
+    const k = monthKey(cal.y, cal.m) + n;
+    setCal(keyToYM(k));
+    setSelectedDay(null);
+  }
+
+  function onDrop(e, date) {
+    e.preventDefault();
+    setDragOver(null);
+    const data = e.dataTransfer.getData("text/plain");
+    const id = Number(data.slice(2));
+    if (data.startsWith("c:")) {
+      const c = campaigns.find((x) => x.id === id);
+      if (c) onMove(c, date.getFullYear(), date.getMonth() + 1, date.getDate());
+    } else if (data.startsWith("s:")) {
+      const p = socialPosts.find((x) => x.id === id);
+      if (p) onMoveSocial(p, isoOf(date));
+    }
+  }
+
+  const dayItems = selectedDay ? (byDay[selectedDay] || []) : [];
+  const daySocial = selectedDay ? (socialByDay[selectedDay] || []) : [];
+  const dayDate = selectedDay ? new Date(selectedDay + "T00:00:00") : null;
+
+  return (
+    <div>
+      <div className="cal-head">
+        <div className="cal-title">{MONTH_NAMES[cal.m - 1]} {cal.y}</div>
+        <div className="cal-nav">
+          <button onClick={() => shift(-1)} aria-label="Mese precedente">‹</button>
+          <button onClick={() => { setCal({ y: TODAY.getFullYear(), m: TODAY.getMonth() + 1 }); setSelectedDay(isoOf(TODAY)); }}>Oggi</button>
+          <button onClick={() => shift(1)} aria-label="Mese successivo">›</button>
+        </div>
+      </div>
+      <div className="cal-grid">
+        {DOW_HEAD.map((d) => <div className="cal-dow" key={d}>{d}</div>)}
+        {cells.map((date) => {
+          const iso = isoOf(date);
+          const items = byDay[iso] || [];
+          const soc = socialByDay[iso] || [];
+          const other = date.getMonth() !== cal.m - 1;
+          const all = [...items.map((c) => ({ kind: "c", c })), ...soc.map((p) => ({ kind: "s", p }))];
+          const shown = all.slice(0, 4);
+          return (
+            <div
+              key={iso}
+              className={"cal-cell" + (other ? " other" : "") + (sameDayIso(iso, TODAY) ? " today" : "") + (dragOver === iso ? " drop" : "") + (selectedDay === iso ? " selected-day" : "")}
+              onClick={() => setSelectedDay(selectedDay === iso ? null : iso)}
+              onDragOver={isMobile ? undefined : (e) => { e.preventDefault(); if (dragOver !== iso) setDragOver(iso); }}
+              onDragLeave={isMobile ? undefined : (e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOver(null); }}
+              onDrop={isMobile ? undefined : (e) => onDrop(e, date)}
+            >
+              <div className="cal-daynum">
+                <span className="n">{date.getDate()}</span>
+                {!isMobile && <button className="cal-add" title="Nuova campagna in questo giorno" onClick={(e) => { e.stopPropagation(); onCreateAt(iso); }}>+</button>}
+              </div>
+              {shown.map((it) => it.kind === "c" ? (
+                <button
+                  key={"c" + it.c.id}
+                  className={"cal-chip" + (isPast(it.c) ? " is-past" : "") + (selectedId === it.c.id ? " selected" : "")}
+                  style={statusBorderLeft(it.c.status)}
+                  draggable={!isMobile}
+                  onDragStart={(e) => { e.dataTransfer.setData("text/plain", "c:" + it.c.id); e.dataTransfer.effectAllowed = "move"; }}
+                  onClick={(e) => { e.stopPropagation(); onSelect(it.c.id); }}
+                  title={it.c.label}
+                >
+                  <span className="t">{it.c.label}</span>
+                  {segmentOf(it.c) && <span className="s">{SEGMENTS[segmentOf(it.c)].short}</span>}
+                </button>
+              ) : (
+                <button
+                  key={"s" + it.p.id}
+                  className="cal-chip social"
+                  draggable={!isMobile}
+                  onDragStart={(e) => { e.dataTransfer.setData("text/plain", "s:" + it.p.id); e.dataTransfer.effectAllowed = "move"; }}
+                  onClick={(e) => { e.stopPropagation(); onSelectSocial(it.p.id); }}
+                  title={"Social · " + it.p.title}
+                >
+                  <span className="s">{(SOCIAL_FORMATS[it.p.format] || "Social").toUpperCase()}</span>
+                  <span className="t">{it.p.title}</span>
+                </button>
+              ))}
+              {all.length > shown.length && <span className="cal-more">+{all.length - shown.length} altre</span>}
+              {(items.length > 0 || soc.length > 0) && (
+                <div className="cal-dots">
+                  {items.map((c) => <span key={c.id} className="status-dot" style={statusDotStyle(c.status)}></span>)}
+                  {soc.map((p) => <span key={"s" + p.id} className="soc"></span>)}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {!isMobile && <div className="cal-hint">Trascina una campagna o un contenuto social su un altro giorno per spostarlo · "+" per crearne una in quel giorno{yearLimited ? " · date limitate al " + BASE_YEAR + " fino all'attivazione" : ""}</div>}
+
+      {selectedDay && (
+        <div className="day-list">
+          <div className="day-list-head">
+            <h3>{fmtLong(dayDate)}</h3>
+            <button className="btn" onClick={() => onCreateAt(selectedDay)}>+ Campagna</button>
+          </div>
+          {dayItems.length === 0 && daySocial.length === 0 && <div className="month-empty">Nessuna campagna in questo giorno</div>}
+          <div className="campaign-list">
+            {dayItems.map((c) => (
+              <CampaignRow
+                key={c.id} c={c} selected={selectedId === c.id} onSelect={onSelect}
+                thumbUrl={getThumbUrl(c.id)} onStatus={onStatus}
+                linkedCount={(socialByCampaign[c.id] || []).length}
+              />
+            ))}
+            {daySocial.map((p) => (
+              <button key={p.id} className="social-row" onClick={() => onSelectSocial(p.id)}>
+                <span className="fmt-chip">{SOCIAL_FORMATS[p.format] || "Social"}</span>
+                <span style={{ flex: 1 }}>{p.title}</span>
+                <span className="linked-count">{SOCIAL_STATUSES[p.status] ? SOCIAL_STATUSES[p.status].label : ""}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+function sameDayIso(iso, d) { return iso === isoOf(d); }
 
 /* ── LEGEND ─────────────────────────────────────────── */
 function Legend() {
@@ -842,40 +1541,81 @@ function Legend() {
     <div className="legend">
       <div className="legend-title">Legenda stati</div>
       <div className="legend-items">
-        {Object.entries(STATUSES).map(([key, cfg]) => (
+        {STATUS_ORDER.map((key) => (
           <div className="legend-item" key={key}>
-            <span className="legend-dot" style={statusDotStyle(key)}></span>
-            {cfg.label}
+            <span className="legend-dot" style={statusDotStyle(key)}></span>{STATUSES[key].label}
           </div>
         ))}
       </div>
+      <div className="legend-note">Clicca il pallino di una campagna per cambiarne lo stato. Le campagne passate sono attenuate; "da segnare" indica quelle passate non ancora segnate come inviate.</div>
     </div>
   );
 }
 
-/* ── DETAIL PANEL (read-only for images/links — editing lives in the
-   "Modifica Campagna" modal, consistent with every other field) ── */
-function DetailPanel({
-  campaign, images, links, getImageUrl,
-  onClose, onEdit, onDuplicate, onDelete,
-}) {
-  const tc = typeOf(campaign), sc = statusOf(campaign);
-  const month = MONTHS.find((m) => m.n === campaign.month);
+/* ── READ-ONLY ATTACHMENTS ──────────────────────────── */
+function ReadOnlyGallery({ images }) {
   const [lightbox, setLightbox] = useState(null);
+  if (images.length === 0) return <div className="detail-section-empty">Nessuna immagine allegata</div>;
+  return (
+    <React.Fragment>
+      <div className="gallery">
+        {images.map((img) => (
+          <div className="gallery-item" key={img.id}>
+            <div className="gallery-thumb-wrap">
+              <img src={imagePublicUrl(img.storage_path)} alt={img.label || ""} onClick={() => setLightbox(img)} />
+              <div className="gallery-thumb-actions">
+                <button className="gallery-icon-btn" title="Scarica" onClick={() => downloadFile(imagePublicUrl(img.storage_path), (img.label || "immagine") + ".jpg")}>⬇</button>
+              </div>
+            </div>
+            {img.label && <div className="gallery-label-view">{img.label}</div>}
+          </div>
+        ))}
+      </div>
+      {lightbox && (
+        <div className="lightbox-overlay" onClick={() => setLightbox(null)}>
+          <button className="lightbox-close" onClick={() => setLightbox(null)}>✕</button>
+          <img src={imagePublicUrl(lightbox.storage_path)} alt={lightbox.label || ""} onClick={(e) => e.stopPropagation()} />
+          <div className="lightbox-caption" onClick={(e) => e.stopPropagation()}>
+            <span>{lightbox.label || "Senza etichetta"}</span>
+            <button className="btn" onClick={() => downloadFile(imagePublicUrl(lightbox.storage_path), (lightbox.label || "immagine") + ".jpg")}>⬇ Scarica</button>
+          </div>
+        </div>
+      )}
+    </React.Fragment>
+  );
+}
 
+function LinkView({ l, onRemove }) {
+  const href = normalizeUrl(l.url);
+  return (
+    <div className="link-item">
+      <span className="link-label">{l.label || "Link"}</span>
+      {href ? <a href={href} target="_blank" rel="noopener noreferrer">{l.url}</a> : <span className="link-text">{l.url}</span>}
+      {!href && <span className="bad-tag">link non valido</span>}
+      {onRemove && <button type="button" className="link-remove" title="Rimuovi" onClick={onRemove}>✕</button>}
+    </div>
+  );
+}
+
+function ReadOnlyLinks({ links }) {
+  if (links.length === 0) return <div className="detail-section-empty">Nessun link allegato</div>;
+  return <div className="links-list">{links.map((l) => <LinkView key={l.id} l={l} />)}</div>;
+}
+
+/* ── DETAIL PANEL (campaign; read-only attachments) ─── */
+function DetailPanel({ campaign, images, links, linkedSocial, onOpenSocial, onStatus, onClose, onEdit, onDuplicate, onDelete }) {
+  const sc = statusOf(campaign);
+  const seg = segmentOf(campaign);
+  const d = dateOf(campaign);
   return (
     <div className="detail-panel" style={statusBorderTop(campaign.status)}>
       <div className="detail-inner">
         <div className="detail-top">
           <div>
             <div className="detail-meta">
-              <span className="type-badge">{tc.label}</span>
-              <span
-                className="status-tag"
-                style={{ "--status-color": sc.color, borderStyle: campaign.status === "planned" ? "dashed" : "solid" }}
-              >
-                {sc.label}
-              </span>
+              <span className="type-badge">{typeOf(campaign).label}</span>
+              {seg && <span className="seg-chip">{SEGMENTS[seg].short}</span>}
+              <span className="status-tag" style={{ "--status-color": sc.color, borderStyle: campaign.status === "planned" ? "dashed" : "solid" }}>{sc.label}</span>
             </div>
             <div className="detail-title">{campaign.label}</div>
           </div>
@@ -887,7 +1627,16 @@ function DetailPanel({
           </div>
         </div>
         <div className="detail-date">
-          Data: <strong>{campaign.day}{campaign.end_day ? "–" + campaign.end_day : ""} {month ? month.name : ""} 2026</strong>
+          Data: <strong>{fmtLong(d)}{campaign.end_day ? " – " + campaign.end_day + " " + MONTH_NAMES[campaign.month - 1].toLowerCase() : ""}</strong>
+          {needsSentMark(campaign) && <span className="past-flag">passata · da segnare come inviata</span>}
+        </div>
+        <div className="status-pills">
+          <span className="lbl">Stato</span>
+          {STATUS_ORDER.map((s) => (
+            <button key={s} className={"status-pill" + (campaign.status === s ? " active" : "")} onClick={() => onStatus(s)}>
+              <span className="status-dot" style={statusDotStyle(s)}></span>{STATUSES[s].label}
+            </button>
+          ))}
         </div>
         {campaign.notes && (
           <div className="detail-notes">
@@ -895,137 +1644,247 @@ function DetailPanel({
             {campaign.notes}
           </div>
         )}
-
         <div className="detail-section">
           <div className="detail-section-label">Immagini</div>
-          {images.length === 0 ? (
-            <div className="detail-section-empty">Nessuna immagine allegata</div>
-          ) : (
-            <div className="gallery">
-              {images.map((img) => (
-                <div className="gallery-item" key={img.id}>
-                  <div className="gallery-thumb-wrap">
-                    <img src={getImageUrl(img.storage_path)} alt={img.label || ""} onClick={() => setLightbox(img)} />
-                    <div className="gallery-thumb-actions">
-                      <button
-                        className="gallery-icon-btn"
-                        title="Scarica"
-                        onClick={() => downloadFile(getImageUrl(img.storage_path), (img.label || "immagine") + ".jpg")}
-                      >
-                        ⬇
-                      </button>
-                    </div>
-                  </div>
-                  {img.label && <div className="gallery-label-view">{img.label}</div>}
-                </div>
-              ))}
-            </div>
-          )}
+          <ReadOnlyGallery images={images} />
         </div>
-
         <div className="detail-section">
           <div className="detail-section-label">Link</div>
-          {links.length === 0 ? (
-            <div className="detail-section-empty">Nessun link allegato</div>
-          ) : (
-            <div className="links-list">
-              {links.map((l) => (
-                <div className="link-item" key={l.id}>
-                  <span className="link-label">{l.label || "Link"}</span>
-                  <a href={l.url} target="_blank" rel="noopener noreferrer">{l.url}</a>
-                </div>
+          <ReadOnlyLinks links={links} />
+        </div>
+        {linkedSocial.length > 0 && (
+          <div className="detail-section">
+            <div className="detail-section-label">Contenuti social collegati</div>
+            <div className="linked-list">
+              {linkedSocial.map((p) => (
+                <button key={p.id} className="linked-item" onClick={() => onOpenSocial(p.id)}>
+                  <span className="fmt-chip">{SOCIAL_FORMATS[p.format] || "Social"}</span>
+                  <span>{p.title}</span>
+                  <span className="muted">{SOCIAL_STATUSES[p.status] ? SOCIAL_STATUSES[p.status].label : ""}</span>
+                </button>
               ))}
             </div>
-          )}
-        </div>
-      </div>
-
-      {lightbox && (
-        <div className="lightbox-overlay" onClick={() => setLightbox(null)}>
-          <button className="lightbox-close" onClick={() => setLightbox(null)}>✕</button>
-          <img src={getImageUrl(lightbox.storage_path)} alt={lightbox.label || ""} onClick={(e) => e.stopPropagation()} />
-          <div className="lightbox-caption" onClick={(e) => e.stopPropagation()}>
-            <span>{lightbox.label || "Senza etichetta"}</span>
-            <button
-              className="btn"
-              onClick={() => downloadFile(getImageUrl(lightbox.storage_path), (lightbox.label || "immagine") + ".jpg")}
-            >
-              ⬇ Scarica
-            </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
 
-/* ── CAMPAIGN MODAL (create / edit) ─────────────────── */
-// Product-relevant placeholder examples (vs. a generic "Figma"-style hint)
-// cycled across staged image/link label inputs.
-const IMAGE_LABEL_EXAMPLES = ["Scheda prodotto", "Foto packaging", "Foto lifestyle", "Dettaglio prodotto", "Hero"];
-const LINK_LABEL_PLACEHOLDER = "es. Scheda prodotto";
+/* ── SOCIAL BOARD ───────────────────────────────────── */
+function SocialBoard({ posts, selectedId, onSelect, onMoveStatus, getThumbUrl, imagesByPost, linksByPost, campaignById, isMobile, mobileCol, setMobileCol }) {
+  const [dragOver, setDragOver] = useState(null);
+  const [draggingId, setDraggingId] = useState(null);
 
-function CampaignModal({
-  initial, editId, onCancel, onSubmit,
-  campaignImages, campaignLinks, getImageUrl,
-  onUploadImages, onUpdateImageLabel, onDeleteImage,
-  onAddLink, onDeleteLink,
-}) {
-  const [form, setForm] = useState({
+  function sorted(list) {
+    return list.slice().sort((a, b) => {
+      if (a.publish_date && b.publish_date) return a.publish_date.localeCompare(b.publish_date);
+      if (a.publish_date) return -1;
+      if (b.publish_date) return 1;
+      return (b.created_at || "").localeCompare(a.created_at || "");
+    });
+  }
+
+  function onDrop(e, status) {
+    e.preventDefault();
+    setDragOver(null);
+    const data = e.dataTransfer.getData("text/plain");
+    if (!data.startsWith("s:")) return;
+    const p = posts.find((x) => x.id === Number(data.slice(2)));
+    if (p) onMoveStatus(p, status);
+  }
+
+  return (
+    <div>
+      <div className="board-tabs">
+        {SOCIAL_ORDER.map((s) => (
+          <button key={s} className={"btn-status" + (mobileCol === s ? " active" : "")} onClick={() => setMobileCol(s)}>
+            {SOCIAL_STATUSES[s].label} ({posts.filter((p) => p.status === s).length})
+          </button>
+        ))}
+      </div>
+      <div className="board">
+        {SOCIAL_ORDER.map((s) => {
+          const list = sorted(posts.filter((p) => (SOCIAL_STATUSES[p.status] ? p.status : "idea") === s));
+          return (
+            <div
+              key={s}
+              className={"board-col" + (dragOver === s ? " drop" : "") + (mobileCol === s ? " mobile-active" : "")}
+              onDragOver={isMobile ? undefined : (e) => { e.preventDefault(); if (dragOver !== s) setDragOver(s); }}
+              onDragLeave={isMobile ? undefined : (e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOver(null); }}
+              onDrop={isMobile ? undefined : (e) => onDrop(e, s)}
+            >
+              <div className="board-col-head">
+                <span className="name">{SOCIAL_STATUSES[s].label}</span>
+                <span className="count">{list.length}</span>
+              </div>
+              <div className="board-col-body">
+                {list.length === 0 && <div className="board-empty">{isMobile ? "Nessun contenuto" : "Trascina qui"}</div>}
+                {list.map((p) => {
+                  const thumb = getThumbUrl(p.id);
+                  const camp = p.campaign_id ? campaignById[p.campaign_id] : null;
+                  const nImg = (imagesByPost[p.id] || []).length;
+                  const nLink = (linksByPost[p.id] || []).length;
+                  return (
+                    <button
+                      key={p.id}
+                      className={"board-card" + (selectedId === p.id ? " selected" : "") + (draggingId === p.id ? " dragging" : "")}
+                      draggable={!isMobile}
+                      onDragStart={(e) => { e.dataTransfer.setData("text/plain", "s:" + p.id); e.dataTransfer.effectAllowed = "move"; setDraggingId(p.id); }}
+                      onDragEnd={() => setDraggingId(null)}
+                      onClick={() => onSelect(p.id)}
+                    >
+                      {thumb && <img className="board-card-img" src={thumb} alt="" />}
+                      <div className="board-card-body">
+                        <div className="board-card-title">{p.title}</div>
+                        <div className="board-card-meta">
+                          <span className="fmt-chip">{SOCIAL_FORMATS[p.format] || "Altro"}</span>
+                          {p.publish_date && <span>{fmtShort(new Date(p.publish_date + "T00:00:00"))}</span>}
+                          {(nImg > 0 || nLink > 0) && <span>{[nImg ? nImg + " img" : null, nLink ? nLink + " link" : null].filter(Boolean).join(" · ")}</span>}
+                        </div>
+                        {camp && <div className="board-card-link">↳ {camp.label}</div>}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {!isMobile && <div className="cal-hint">Trascina le card tra le colonne per cambiarne lo stato. I contenuti con data compaiono anche nel Calendario email.</div>}
+    </div>
+  );
+}
+
+function SocialDetailPanel({ post, images, links, campaign, onOpenCampaign, onStatus, onClose, onEdit, onDelete }) {
+  return (
+    <div className="detail-panel" style={{ borderTopColor: "#1a1a1a" }}>
+      <div className="detail-inner">
+        <div className="detail-top">
+          <div>
+            <div className="detail-meta">
+              <span className="fmt-chip">{SOCIAL_FORMATS[post.format] || "Altro"}</span>
+              <span style={{ fontSize: 11, color: "#888" }}>{SOCIAL_STATUSES[post.status] ? SOCIAL_STATUSES[post.status].label : ""}</span>
+            </div>
+            <div className="detail-title">{post.title}</div>
+          </div>
+          <div className="detail-actions">
+            <button className="btn-icon" onClick={onEdit}>✎ Modifica</button>
+            <button className="btn-icon danger" onClick={onDelete}>✕ Elimina</button>
+            <button className="btn-icon" onClick={onClose} title="Chiudi">↓</button>
+          </div>
+        </div>
+        <div className="detail-date">
+          Pubblicazione: <strong>{post.publish_date ? fmtLong(new Date(post.publish_date + "T00:00:00")) : "da definire"}</strong>
+          {campaign && <span> · Collegata a <button className="link-btn" onClick={() => onOpenCampaign(campaign.id)}>{campaign.label}</button></span>}
+        </div>
+        <div className="status-pills">
+          <span className="lbl">Sposta in</span>
+          {SOCIAL_ORDER.map((s) => (
+            <button key={s} className={"status-pill" + (post.status === s ? " active" : "")} onClick={() => onStatus(s)}>{SOCIAL_STATUSES[s].label}</button>
+          ))}
+        </div>
+        {post.notes && (
+          <div className="detail-notes">
+            <span className="detail-notes-label">Brief / Note</span>
+            {post.notes}
+          </div>
+        )}
+        <div className="detail-section">
+          <div className="detail-section-label">Immagini di riferimento</div>
+          <ReadOnlyGallery images={images} />
+        </div>
+        <div className="detail-section">
+          <div className="detail-section-label">Link inspo e prodotti</div>
+          <ReadOnlyLinks links={links} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── CAMPAIGN MODAL ─────────────────────────────────── */
+function CampaignModal({ initial, presetDate, editId, campaignImages, campaignLinks, yearLimited, handlers, onCancel, onSubmit }) {
+  const isCreate = !editId;
+  const todayIso = isoOf(TODAY);
+  const [form, setForm] = useState(() => initial ? {
     label: initial.label || "",
-    type: initial.type || "newsletter",
+    type: typeKey(initial),
     status: initial.status || "tbd",
-    month: initial.month || 8,
-    day: initial.day || 1,
+    date: isoDate(yearOf(initial), initial.month, initial.day),
     end_day: initial.end_day || "",
     notes: initial.notes || "",
+    segment: initial.segment || "",
+  } : {
+    label: "", type: DEFAULT_TYPE, status: "tbd",
+    date: presetDate || (yearLimited && TODAY.getFullYear() !== BASE_YEAR ? BASE_YEAR + "-12-31" : todayIso),
+    end_day: "", notes: "", segment: "",
   });
+  const [typeAuto, setTypeAuto] = useState(isCreate);
+  const [segAuto, setSegAuto] = useState(isCreate || !(initial && initial.segment));
   const [stagedImages, setStagedImages] = useState([]);
   const [stagedLinks, setStagedLinks] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
-  // Revoke any leftover local preview URLs when the modal unmounts so we
-  // don't leak blob: URLs for images that were never uploaded. Uses a ref
-  // so this only fires once, on unmount — not on every staged-image change.
-  const stagedImagesRef = useRef(stagedImages);
-  useEffect(() => { stagedImagesRef.current = stagedImages; }, [stagedImages]);
-  useEffect(() => {
-    return () => { stagedImagesRef.current.forEach((it) => URL.revokeObjectURL(it.previewUrl)); };
-  }, []);
+  const stagedRef = useRef(stagedImages);
+  useEffect(() => { stagedRef.current = stagedImages; }, [stagedImages]);
+  useEffect(() => () => { stagedRef.current.forEach((it) => URL.revokeObjectURL(it.previewUrl)); }, []);
 
   function set(field, value) { setForm((prev) => ({ ...prev, [field]: value })); }
 
+  // Type/segment follow the title while the user hasn't chosen them by hand.
+  function setText(field, value) {
+    setForm((prev) => {
+      const next = { ...prev, [field]: value };
+      const det = detectFromText(next.label, next.notes);
+      if (typeAuto && det.type) next.type = det.type;
+      if (segAuto && det.segment) next.segment = det.segment;
+      return next;
+    });
+  }
+
+  const detected = detectFromText(form.label, form.notes);
+  const typeSuggestion = !typeAuto && detected.type && detected.type !== form.type ? detected.type : null;
+  const segSuggestion = !segAuto && detected.segment && detected.segment !== form.segment ? detected.segment : null;
+
   async function submit(e) {
     e.preventDefault();
-    if (!form.label.trim() || saving) return;
+    if (saving) return;
+    if (!form.label.trim()) { setError("Inserisci il nome della campagna"); return; }
+    if (!form.date) { setError("Inserisci la data"); return; }
+    const { y, m, d } = parseIso(form.date);
+    if (yearLimited && y !== BASE_YEAR) { setError("Per ora sono disponibili solo date del " + BASE_YEAR); return; }
+    let end = form.end_day ? parseInt(form.end_day, 10) : null;
+    if (end && (end <= d || end > daysInMonth(y, m))) end = null;
     setSaving(true);
     await onSubmit({
       label: form.label.trim(),
       type: form.type,
       status: form.status,
-      month: parseInt(form.month, 10),
-      day: parseInt(form.day, 10) || 1,
-      end_day: form.end_day ? parseInt(form.end_day, 10) : null,
+      year: y, month: m, day: d,
+      end_day: end,
       notes: form.notes.trim(),
+      segment: form.segment || null,
     }, editId, stagedImages, stagedLinks);
     setSaving(false);
   }
 
-  const tc = TYPES[form.type], sc = STATUSES[form.status];
+  const pd = form.date ? (() => { const p = parseIso(form.date); return new Date(p.y, p.m - 1, p.d); })() : TODAY;
 
   return (
     <div className="overlay" onClick={saving ? undefined : onCancel}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>{editId ? "Modifica Campagna" : "Nuova Campagna"}</h2>
-        </div>
+        <div className="modal-header"><h2>{editId ? "Modifica Campagna" : "Nuova Campagna"}</h2></div>
         <form onSubmit={submit}>
           <div className="modal-body">
             <div className="preview-box">
               <div className="preview-label">Anteprima</div>
               <div className="preview-row" style={statusBorderLeft(form.status)}>
-                <span className="day">{String(form.day || 1).padStart(2, "0")}{form.end_day ? "–" + String(form.end_day).padStart(2, "0") : ""}</span>
-                <span className="type-badge">{tc.label}</span>
+                <span className="day"><b>{WEEKDAY_SHORT[pd.getDay()]}</b>{pad2(pd.getDate())}{form.end_day ? "–" + pad2(form.end_day) : ""}</span>
+                <span className="type-badge">{TYPES[form.type].label}</span>
+                {form.segment && <span className="seg-chip">{SEGMENTS[form.segment].short}</span>}
                 <span className="name">{form.label || "Nome campagna"}</span>
                 <span className="status-dot" style={statusDotStyle(form.status)}></span>
               </div>
@@ -1033,44 +1892,59 @@ function CampaignModal({
 
             <div className="form-group">
               <label className="form-label">Nome campagna *</label>
-              <input className="form-input" value={form.label} onChange={(e) => set("label", e.target.value)} placeholder="es. Lancio Collezione Autunno" autoFocus />
+              <input className="form-input" value={form.label} onChange={(e) => setText("label", e.target.value)} placeholder="es. Nuovi arrivi Alden — Uomo" autoFocus />
+              {isCreate && <div className="form-hint">Tipo e segmento vengono riconosciuti dal titolo (es. "nuovi arrivi", "back in stock", "uomo/donna"): puoi sempre cambiarli.</div>}
             </div>
 
             <div className="form-group form-row form-row-2">
               <div>
-                <label className="form-label">Tipo</label>
-                <select className="form-select" value={form.type} onChange={(e) => set("type", e.target.value)}>
+                <label className="form-label">Tipo{typeAuto && detected.type && <span className="auto-tag">dal titolo</span>}</label>
+                <select className="form-select" value={form.type} onChange={(e) => { setTypeAuto(false); set("type", e.target.value); }}>
                   {Object.entries(TYPES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                 </select>
+                {typeSuggestion && (
+                  <div className="suggest-row">Dal titolo: <b>{TYPES[typeSuggestion].label}</b>
+                    <button type="button" className="suggest-apply" onClick={() => set("type", typeSuggestion)}>Applica</button>
+                  </div>
+                )}
               </div>
               <div>
-                <label className="form-label">Stato</label>
-                <select className="form-select" value={form.status} onChange={(e) => set("status", e.target.value)}>
-                  {Object.entries(STATUSES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                <label className="form-label">Segmento{segAuto && detected.segment && <span className="auto-tag">dal titolo</span>}</label>
+                <select className="form-select" value={form.segment} onChange={(e) => { setSegAuto(false); set("segment", e.target.value); }}>
+                  <option value="">Non specificato</option>
+                  {Object.entries(SEGMENTS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                 </select>
+                {segSuggestion && (
+                  <div className="suggest-row">Dal titolo: <b>{SEGMENTS[segSuggestion].label}</b>
+                    <button type="button" className="suggest-apply" onClick={() => set("segment", segSuggestion)}>Applica</button>
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="form-group form-row form-row-3">
               <div>
-                <label className="form-label">Mese</label>
-                <select className="form-select" value={form.month} onChange={(e) => set("month", e.target.value)}>
-                  {MONTHS.map((m) => <option key={m.n} value={m.n}>{m.name}</option>)}
-                </select>
+                <label className="form-label">Data invio *</label>
+                <input className="form-input" type="date" value={form.date}
+                  min={yearLimited ? BASE_YEAR + "-01-01" : undefined}
+                  max={yearLimited ? BASE_YEAR + "-12-31" : undefined}
+                  onChange={(e) => set("date", e.target.value)} />
               </div>
               <div>
-                <label className="form-label">Giorno</label>
-                <input className="form-input" type="number" min="1" max="31" value={form.day} onChange={(e) => set("day", e.target.value)} />
-              </div>
-              <div>
-                <label className="form-label">Fine (opz.)</label>
+                <label className="form-label">Fino al giorno (opz.)</label>
                 <input className="form-input" type="number" min="1" max="31" value={form.end_day} onChange={(e) => set("end_day", e.target.value)} placeholder="—" />
+              </div>
+              <div>
+                <label className="form-label">Stato</label>
+                <select className="form-select" value={form.status} onChange={(e) => set("status", e.target.value)}>
+                  {STATUS_ORDER.map((k) => <option key={k} value={k}>{STATUSES[k].label}</option>)}
+                </select>
               </div>
             </div>
 
             <div className="form-group">
               <label className="form-label">Descrizione / Note</label>
-              <textarea className="form-textarea" value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Dettagli, obiettivi, coordinamento..."></textarea>
+              <textarea className="form-textarea" value={form.notes} onChange={(e) => setText("notes", e.target.value)} placeholder="Prodotti, segmenti, link da mettere, coordinamento..."></textarea>
             </div>
 
             <div className="form-group">
@@ -1078,13 +1952,13 @@ function CampaignModal({
               {editId ? (
                 <ModalImageGallery
                   images={campaignImages}
-                  getImageUrl={getImageUrl}
-                  onUpload={(files) => onUploadImages(editId, files.map((f) => ({ file: f, label: "" })))}
-                  onUpdateLabel={onUpdateImageLabel}
-                  onDelete={onDeleteImage}
+                  examples={IMAGE_LABEL_EXAMPLES}
+                  onUpload={(files) => handlers.onUploadImages("campaign", editId, files.map((f) => ({ file: f, label: "" })))}
+                  onUpdateLabel={(id, label) => handlers.onUpdateImageLabel("campaign", id, label)}
+                  onDelete={(img) => handlers.onDeleteImage("campaign", img)}
                 />
               ) : (
-                <StagedImagesEditor staged={stagedImages} setStaged={setStagedImages} />
+                <StagedImagesEditor staged={stagedImages} setStaged={setStagedImages} examples={IMAGE_LABEL_EXAMPLES} />
               )}
             </div>
 
@@ -1093,19 +1967,19 @@ function CampaignModal({
               {editId ? (
                 <ModalLinksSection
                   links={campaignLinks}
-                  onAdd={(label, url) => onAddLink(editId, label, url)}
-                  onDelete={onDeleteLink}
+                  placeholder={LINK_LABEL_PLACEHOLDER}
+                  onAdd={(label, url) => handlers.onAddLink("campaign", editId, label, url)}
+                  onDelete={(id) => handlers.onDeleteLink("campaign", id)}
                 />
               ) : (
-                <StagedLinksEditor staged={stagedLinks} setStaged={setStagedLinks} />
+                <StagedLinksEditor staged={stagedLinks} setStaged={setStagedLinks} placeholder={LINK_LABEL_PLACEHOLDER} />
               )}
             </div>
+            {error && <div className="field-error">{error}</div>}
           </div>
           <div className="modal-footer">
             <button type="button" className="btn" onClick={onCancel} disabled={saving}>Annulla</button>
-            <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? "Salvataggio..." : (editId ? "Salva Modifiche" : "Aggiungi Campagna")}
-            </button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? "Salvataggio..." : (editId ? "Salva Modifiche" : "Aggiungi Campagna")}</button>
           </div>
         </form>
       </div>
@@ -1113,24 +1987,136 @@ function CampaignModal({
   );
 }
 
-/* ── STAGED IMAGES (create mode: local only until campaign is saved) ── */
-function StagedImagesEditor({ staged, setStaged }) {
+/* ── SOCIAL MODAL ───────────────────────────────────── */
+function SocialModal({ initial, presetDate, editId, postImages, postLinks, campaigns, handlers, onCancel, onSubmit }) {
+  const [form, setForm] = useState(() => initial ? {
+    title: initial.title || "",
+    format: SOCIAL_FORMATS[initial.format] ? initial.format : "other",
+    status: SOCIAL_STATUSES[initial.status] ? initial.status : "idea",
+    publish_date: initial.publish_date || "",
+    campaign_id: initial.campaign_id ? String(initial.campaign_id) : "",
+    notes: initial.notes || "",
+  } : { title: "", format: "reel", status: "idea", publish_date: presetDate || "", campaign_id: "", notes: "" });
+  const [stagedImages, setStagedImages] = useState([]);
+  const [stagedLinks, setStagedLinks] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const stagedRef = useRef(stagedImages);
+  useEffect(() => { stagedRef.current = stagedImages; }, [stagedImages]);
+  useEffect(() => () => { stagedRef.current.forEach((it) => URL.revokeObjectURL(it.previewUrl)); }, []);
+
+  function set(field, value) { setForm((prev) => ({ ...prev, [field]: value })); }
+
+  // Upcoming campaigns first: that's what a social piece is usually built around.
+  const campaignOptions = useMemo(() => {
+    const list = campaigns.slice().sort((a, b) => dateOf(a) - dateOf(b));
+    return [...list.filter((c) => !isPast(c)), ...list.filter((c) => isPast(c)).reverse()];
+  }, [campaigns]);
+
+  async function submit(e) {
+    e.preventDefault();
+    if (saving) return;
+    if (!form.title.trim()) { setError("Inserisci un titolo"); return; }
+    setSaving(true);
+    await onSubmit({
+      title: form.title.trim(),
+      format: form.format,
+      status: form.status,
+      publish_date: form.publish_date || null,
+      campaign_id: form.campaign_id ? Number(form.campaign_id) : null,
+      notes: form.notes.trim(),
+    }, editId, stagedImages, stagedLinks);
+    setSaving(false);
+  }
+
+  return (
+    <div className="overlay" onClick={saving ? undefined : onCancel}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header"><h2>{editId ? "Modifica Contenuto" : "Nuovo Contenuto Social"}</h2></div>
+        <form onSubmit={submit}>
+          <div className="modal-body">
+            <div className="form-group">
+              <label className="form-label">Titolo / idea *</label>
+              <input className="form-input" value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="es. Reel lucidatura Alden con il Boot Black" autoFocus />
+            </div>
+            <div className="form-group form-row form-row-3">
+              <div>
+                <label className="form-label">Formato</label>
+                <select className="form-select" value={form.format} onChange={(e) => set("format", e.target.value)}>
+                  {Object.entries(SOCIAL_FORMATS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="form-label">Stato</label>
+                <select className="form-select" value={form.status} onChange={(e) => set("status", e.target.value)}>
+                  {SOCIAL_ORDER.map((k) => <option key={k} value={k}>{SOCIAL_STATUSES[k].label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="form-label">Pubblicazione (opz.)</label>
+                <input className="form-input" type="date" value={form.publish_date} onChange={(e) => set("publish_date", e.target.value)} />
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Collegato alla campagna email (opz.)</label>
+              <select className="form-select" value={form.campaign_id} onChange={(e) => set("campaign_id", e.target.value)}>
+                <option value="">Nessuna</option>
+                {campaignOptions.map((c) => <option key={c.id} value={c.id}>{fmtShort(dateOf(c))} — {c.label}</option>)}
+              </select>
+              <div className="form-hint">Così chi pianifica le email vede il contenuto social previsto per quel momento.</div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Brief / Note</label>
+              <textarea className="form-textarea" value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Cosa girare, mood, prodotti, caption, chi serve sul set..."></textarea>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Immagini di riferimento</label>
+              {editId ? (
+                <ModalImageGallery
+                  images={postImages}
+                  examples={INSPO_LABEL_EXAMPLES}
+                  onUpload={(files) => handlers.onUploadImages("social", editId, files.map((f) => ({ file: f, label: "" })))}
+                  onUpdateLabel={(id, label) => handlers.onUpdateImageLabel("social", id, label)}
+                  onDelete={(img) => handlers.onDeleteImage("social", img)}
+                />
+              ) : (
+                <StagedImagesEditor staged={stagedImages} setStaged={setStagedImages} examples={INSPO_LABEL_EXAMPLES} />
+              )}
+            </div>
+            <div className="form-group">
+              <label className="form-label">Link inspo e prodotti</label>
+              {editId ? (
+                <ModalLinksSection
+                  links={postLinks}
+                  placeholder={INSPO_LINK_PLACEHOLDER}
+                  onAdd={(label, url) => handlers.onAddLink("social", editId, label, url)}
+                  onDelete={(id) => handlers.onDeleteLink("social", id)}
+                />
+              ) : (
+                <StagedLinksEditor staged={stagedLinks} setStaged={setStagedLinks} placeholder={INSPO_LINK_PLACEHOLDER} />
+              )}
+            </div>
+            {error && <div className="field-error">{error}</div>}
+          </div>
+          <div className="modal-footer">
+            <button type="button" className="btn" onClick={onCancel} disabled={saving}>Annulla</button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? "Salvataggio..." : (editId ? "Salva Modifiche" : "Aggiungi Contenuto")}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ── ATTACHMENT EDITORS ─────────────────────────────── */
+// Create mode: images stay local until the owner row exists.
+function StagedImagesEditor({ staged, setStaged, examples }) {
   function handleFiles(e) {
     const files = [...e.target.files];
     e.target.value = "";
-    const newItems = files.map((file) => ({
-      key: Date.now() + "-" + Math.random().toString(36).slice(2, 8),
-      file,
-      label: "",
-      previewUrl: URL.createObjectURL(file),
-    }));
-    setStaged((prev) => [...prev, ...newItems]);
+    setStaged((prev) => [...prev, ...files.map((file) => ({ key: randomKey(), file, label: "", previewUrl: URL.createObjectURL(file) }))]);
   }
-
-  function updateLabel(key, label) {
-    setStaged((prev) => prev.map((it) => (it.key === key ? { ...it, label } : it)));
-  }
-
   function remove(key) {
     setStaged((prev) => {
       const target = prev.find((it) => it.key === key);
@@ -1138,19 +2124,11 @@ function StagedImagesEditor({ staged, setStaged }) {
       return prev.filter((it) => it.key !== key);
     });
   }
-
   return (
     <div>
       <div className="staged-header">
-        <span className="staged-count">
-          {staged.length === 0
-            ? "Verranno caricate al salvataggio"
-            : staged.length + (staged.length === 1 ? " immagine selezionata" : " immagini selezionate")}
-        </span>
-        <label className="upload-btn">
-          + Aggiungi
-          <input type="file" accept="image/*" multiple onChange={handleFiles} />
-        </label>
+        <span className="staged-count">{staged.length === 0 ? "Verranno caricate al salvataggio" : staged.length + (staged.length === 1 ? " immagine selezionata" : " immagini selezionate")}</span>
+        <label className="upload-btn">+ Aggiungi<input type="file" accept="image/*" multiple onChange={handleFiles} /></label>
       </div>
       {staged.length > 0 && (
         <div className="gallery">
@@ -1162,13 +2140,8 @@ function StagedImagesEditor({ staged, setStaged }) {
                   <button type="button" className="gallery-icon-btn danger" title="Rimuovi" onClick={() => remove(it.key)}>✕</button>
                 </div>
               </div>
-              <input
-                type="text"
-                className="gallery-label-input"
-                value={it.label}
-                placeholder={IMAGE_LABEL_EXAMPLES[idx % IMAGE_LABEL_EXAMPLES.length]}
-                onChange={(e) => updateLabel(it.key, e.target.value)}
-              />
+              <input type="text" className="gallery-label-input" value={it.label} placeholder={examples[idx % examples.length]}
+                onChange={(e) => { const v = e.target.value; setStaged((prev) => prev.map((x) => (x.key === it.key ? { ...x, label: v } : x))); }} />
             </div>
           ))}
         </div>
@@ -1177,97 +2150,44 @@ function StagedImagesEditor({ staged, setStaged }) {
   );
 }
 
-/* ── STAGED LINKS (create mode: local only until campaign is saved) ── */
-function StagedLinksEditor({ staged, setStaged }) {
-  const [form, setForm] = useState({ label: "", url: "" });
-
-  function add() {
-    if (!form.url.trim()) return;
-    setStaged((prev) => [...prev, { key: Date.now() + "-" + Math.random().toString(36).slice(2, 8), label: form.label.trim(), url: form.url.trim() }]);
-    setForm({ label: "", url: "" });
-  }
-
-  function remove(key) {
-    setStaged((prev) => prev.filter((l) => l.key !== key));
-  }
-
-  return (
-    <div>
-      {staged.length > 0 && (
-        <div className="links-list">
-          {staged.map((l) => (
-            <div className="link-item" key={l.key}>
-              <span className="link-label">{l.label || "Link"}</span>
-              <span style={{ flex: 1, fontSize: 13, color: "#1a1a1a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.url}</span>
-              <button type="button" className="link-remove" title="Rimuovi" onClick={() => remove(l.key)}>✕</button>
-            </div>
-          ))}
-        </div>
-      )}
-      <div className="link-add-row">
-        <input
-          type="text"
-          className="link-label-input"
-          placeholder={LINK_LABEL_PLACEHOLDER}
-          value={form.label}
-          onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
-        />
-        <input
-          type="text"
-          className="link-url-input"
-          placeholder="https://..."
-          value={form.url}
-          onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
-          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
-        />
-        <button type="button" className="link-add-btn" onClick={add}>+ Aggiungi</button>
-      </div>
-    </div>
-  );
-}
-
-/* ── MODAL IMAGE GALLERY (edit mode: persisted, immediate actions) ── */
-function ModalImageGallery({ images, getImageUrl, onUpload, onUpdateLabel, onDelete }) {
+// Edit mode: acts immediately on Supabase. Labels save on blur/Enter so
+// fast typing can't be overwritten by out-of-order responses.
+function ModalImageGallery({ images, examples, onUpload, onUpdateLabel, onDelete }) {
+  const [drafts, setDrafts] = useState({});
   function handleFiles(e) {
     const files = [...e.target.files];
     e.target.value = "";
     if (files.length) onUpload(files);
   }
-
+  function commit(img) {
+    const v = drafts[img.id];
+    if (v === undefined) return;
+    if (v.trim() !== (img.label || "")) onUpdateLabel(img.id, v.trim());
+    setDrafts((d) => { const n = { ...d }; delete n[img.id]; return n; });
+  }
   return (
     <div>
       <div className="staged-header">
         <span className="staged-count">{images.length === 0 ? "Nessuna immagine allegata" : images.length + (images.length === 1 ? " immagine" : " immagini")}</span>
-        <label className="upload-btn">
-          + Aggiungi
-          <input type="file" accept="image/*" multiple onChange={handleFiles} />
-        </label>
+        <label className="upload-btn">+ Aggiungi<input type="file" accept="image/*" multiple onChange={handleFiles} /></label>
       </div>
       {images.length > 0 && (
         <div className="gallery">
-          {images.map((img) => (
+          {images.map((img, idx) => (
             <div className="gallery-item" key={img.id}>
               <div className="gallery-thumb-wrap">
-                <img src={getImageUrl(img.storage_path)} alt={img.label || ""} />
+                <img src={imagePublicUrl(img.storage_path)} alt={img.label || ""} />
                 <div className="gallery-thumb-actions">
-                  <button
-                    type="button"
-                    className="gallery-icon-btn"
-                    title="Scarica"
-                    onClick={() => downloadFile(getImageUrl(img.storage_path), (img.label || "immagine") + ".jpg")}
-                  >
-                    ⬇
-                  </button>
+                  <button type="button" className="gallery-icon-btn" title="Scarica" onClick={() => downloadFile(imagePublicUrl(img.storage_path), (img.label || "immagine") + ".jpg")}>⬇</button>
                   <button type="button" className="gallery-icon-btn danger" title="Elimina" onClick={() => onDelete(img)}>✕</button>
                 </div>
               </div>
-              <input
-                type="text"
-                className="gallery-label-input"
-                value={img.label}
-                placeholder="es. Scheda prodotto"
-                onChange={(e) => onUpdateLabel(img.id, e.target.value)}
-              />
+              <input type="text" className="gallery-label-input"
+                value={drafts[img.id] !== undefined ? drafts[img.id] : (img.label || "")}
+                placeholder={examples[idx % examples.length]}
+                onChange={(e) => { const v = e.target.value; setDrafts((d) => ({ ...d, [img.id]: v })); }}
+                onBlur={() => commit(img)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); } }} />
             </div>
           ))}
         </div>
@@ -1276,65 +2196,64 @@ function ModalImageGallery({ images, getImageUrl, onUpload, onUpdateLabel, onDel
   );
 }
 
-/* ── MODAL LINKS SECTION (edit mode: persisted, immediate actions) ── */
-function ModalLinksSection({ links, onAdd, onDelete }) {
-  const [form, setForm] = useState({ label: "", url: "" });
-
-  function submitLink() {
-    if (!form.url.trim()) return;
-    onAdd(form.label, form.url);
-    setForm({ label: "", url: "" });
+function LinkAddRow({ placeholder, onAdd }) {
+  const [label, setLabel] = useState("");
+  const [url, setUrl] = useState("");
+  const [err, setErr] = useState("");
+  function add() {
+    if (!url.trim()) return;
+    const normalized = normalizeUrl(url);
+    if (!normalized) { setErr("Non sembra un link: incolla l'indirizzo completo (es. https://www.cappellettoshop.com/...)"); return; }
+    onAdd(label.trim(), normalized);
+    setLabel(""); setUrl(""); setErr("");
   }
-
   return (
     <div>
-      {links.length > 0 && (
-        <div className="links-list">
-          {links.map((l) => (
-            <div className="link-item" key={l.id}>
-              <span className="link-label">{l.label || "Link"}</span>
-              <a href={l.url} target="_blank" rel="noopener noreferrer">{l.url}</a>
-              <button type="button" className="link-remove" title="Rimuovi" onClick={() => onDelete(l.id)}>✕</button>
-            </div>
-          ))}
-        </div>
-      )}
       <div className="link-add-row">
-        <input
-          type="text"
-          className="link-label-input"
-          placeholder={LINK_LABEL_PLACEHOLDER}
-          value={form.label}
-          onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
-        />
-        <input
-          type="text"
-          className="link-url-input"
-          placeholder="https://..."
-          value={form.url}
-          onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
-          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submitLink(); } }}
-        />
-        <button type="button" className="link-add-btn" onClick={submitLink}>+ Aggiungi</button>
+        <input type="text" className="link-label-input" placeholder={placeholder} value={label} onChange={(e) => setLabel(e.target.value)} />
+        <input type="text" className={"link-url-input" + (err ? " invalid" : "")} placeholder="https://..." value={url}
+          onChange={(e) => { setUrl(e.target.value); if (err) setErr(""); }}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }} />
+        <button type="button" className="link-add-btn" onClick={add}>+ Aggiungi</button>
       </div>
+      {err && <div className="field-error">{err}</div>}
     </div>
   );
 }
 
-/* ── DELETE CONFIRM MODAL ───────────────────────────── */
-function ConfirmDeleteModal({ campaign, onCancel, onConfirm }) {
+function StagedLinksEditor({ staged, setStaged, placeholder }) {
   return (
-    <div className="overlay" onClick={onCancel}>
+    <div>
+      {staged.length > 0 && (
+        <div className="links-list">
+          {staged.map((l) => <LinkView key={l.key} l={l} onRemove={() => setStaged((prev) => prev.filter((x) => x.key !== l.key))} />)}
+        </div>
+      )}
+      <LinkAddRow placeholder={placeholder} onAdd={(label, url) => setStaged((prev) => [...prev, { key: randomKey(), label, url }])} />
+    </div>
+  );
+}
+
+function ModalLinksSection({ links, placeholder, onAdd, onDelete }) {
+  return (
+    <div>
+      {links.length > 0 && <div className="links-list">{links.map((l) => <LinkView key={l.id} l={l} onRemove={() => onDelete(l.id)} />)}</div>}
+      <LinkAddRow placeholder={placeholder} onAdd={onAdd} />
+    </div>
+  );
+}
+
+/* ── DELETE CONFIRM ─────────────────────────────────── */
+function ConfirmDeleteModal({ title, onCancel, onConfirm }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <div className="overlay" onClick={busy ? undefined : onCancel}>
       <div className="modal modal-sm" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Eliminare "{campaign.label}"?</h2>
-        </div>
-        <div className="modal-body">
-          <p style={{ fontSize: 13, color: "#888" }}>Questa azione non può essere annullata.</p>
-        </div>
+        <div className="modal-header"><h2>Eliminare "{title}"?</h2></div>
+        <div className="modal-body"><p style={{ fontSize: 13, color: "#888" }}>Verranno eliminati anche immagini e link allegati. L'azione non può essere annullata.</p></div>
         <div className="modal-footer">
-          <button className="btn" onClick={onCancel}>Annulla</button>
-          <button className="btn btn-danger" onClick={onConfirm}>Elimina</button>
+          <button className="btn" onClick={onCancel} disabled={busy}>Annulla</button>
+          <button className="btn btn-danger" disabled={busy} onClick={async () => { setBusy(true); await onConfirm(); }}>Elimina</button>
         </div>
       </div>
     </div>
