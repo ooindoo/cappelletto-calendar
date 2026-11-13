@@ -161,7 +161,7 @@
   .legend-note { font-size: 11px; color: #aaa; margin-top: 10px; }
 
   /* ── DETAIL PANEL ───────────────────────── */
-  .detail-panel { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 3px solid #ccc; box-shadow: 0 -8px 30px rgba(0,0,0,.12); z-index: 250; max-height: 46vh; overflow-y: auto; }
+  .detail-panel { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 3px solid #ccc; box-shadow: 0 -8px 30px rgba(0,0,0,.12); z-index: 250; max-height: 46vh; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding-bottom: env(safe-area-inset-bottom); }
   .detail-inner { max-width: 1200px; margin: 0 auto; padding: 22px 32px 26px; }
   .detail-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 12px; }
   .detail-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
@@ -258,12 +258,17 @@
 
   /* ── MODAL / OVERLAY ────────────────────── */
   .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 20px; }
-  .modal { background: #fff; width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto; }
+  /* Header and footer stay put; only the body scrolls, and its scroll
+     never chains to the page behind. */
+  .modal { background: #fff; width: 100%; max-width: 580px; max-height: 90vh; max-height: 90dvh; display: flex; flex-direction: column; overflow: hidden; }
+  .modal > form { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
   .modal-sm { max-width: 400px; }
-  .modal-header { padding: 22px 28px; border-bottom: 1px solid #e8e8e8; }
+  .modal-header { padding: 18px 28px; border-bottom: 1px solid #e8e8e8; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .modal-header h2 { font-size: 16px; font-weight: 700; color: #1a1a1a; }
-  .modal-body { padding: 22px 28px; }
-  .modal-footer { padding: 18px 28px; border-top: 1px solid #e8e8e8; display: flex; justify-content: flex-end; gap: 10px; }
+  .modal-close { width: 36px; height: 36px; flex-shrink: 0; background: #fff; border: 1px solid #e8e8e8; color: #888; font-size: 15px; line-height: 1; padding: 0; }
+  .modal-close:hover { border-color: #1a1a1a; color: #1a1a1a; }
+  .modal-body { padding: 22px 28px; flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+  .modal-footer { padding: 16px 28px; border-top: 1px solid #e8e8e8; display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; background: #fff; }
   .btn { padding: 9px 18px; font-size: 13px; font-weight: 600; border: 1px solid #e8e8e8; background: #fff; color: #1a1a1a; transition: border-color .12s; }
   .btn:hover { border-color: #1a1a1a; }
   .btn-primary { background: #1a1a1a; border-color: #1a1a1a; color: #fff; }
@@ -277,6 +282,9 @@
   .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: #1a1a1a; }
   .form-input::placeholder, .form-textarea::placeholder { color: #bbb; }
   .form-textarea { min-height: 72px; resize: vertical; }
+  /* iOS ignores width:100% on date inputs inside grids unless reset. */
+  .form-input[type="date"] { -webkit-appearance: none; appearance: none; min-width: 0; display: block; text-align: left; min-height: 38px; }
+  .form-input[type="date"]::-webkit-date-and-time-value { text-align: left; }
   .form-select { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23aaa'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 30px; }
   .form-row { display: grid; gap: 12px; }
   .form-row-2 { grid-template-columns: 1fr 1fr; }
@@ -300,6 +308,29 @@
 
   @media (max-width: 1000px) {
     .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  /* Touch devices (phones and tablets, any orientation): iOS zooms the
+     whole page when a field under 16px gets focus — that is what broke
+     the forms on the phone. */
+  @media (hover: none) and (pointer: coarse) {
+    input, select, textarea { font-size: 16px !important; }
+  }
+  /* No hover on touch: hover-only controls must be visible. */
+  @media (hover: none) {
+    .cal-add { opacity: .7; }
+  }
+
+  /* Phones (portrait or landscape): forms become a full-screen sheet with
+     title and buttons always on screen; the filter bar stops being sticky. */
+  @media (max-width: 700px), (max-height: 520px) {
+    .overlay.sheet { padding: 0; align-items: stretch; justify-content: stretch; }
+    .overlay.sheet .modal { max-width: none; width: 100%; height: 100%; max-height: none; }
+    .overlay.sheet .modal-header { padding: 12px 16px; }
+    .overlay.sheet .modal-body { padding: 18px 16px 24px; }
+    .overlay.sheet .modal-footer { padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); }
+    .overlay.sheet .modal-footer .btn { flex: 1; }
+    .toolbar { position: static; }
   }
 
   @media (max-width: 700px) {
@@ -379,6 +410,10 @@
     .suggest-apply { min-height: 32px; }
 
     .upload-btn { min-height: 40px; padding: 8px 12px; }
+    .gallery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .gallery-item { width: auto; min-width: 0; }
+    .gallery-thumb-wrap { width: 100%; height: auto; aspect-ratio: 1 / 1; }
+    .gallery-label-input, .gallery-label-view { width: 100%; }
     .gallery-icon-btn { width: 32px; height: 32px; font-size: 13px; }
     .link-remove { min-width: 36px; min-height: 36px; }
     .link-add-row { flex-direction: column; }
@@ -617,6 +652,21 @@ function useIsMobile() {
     return () => mq.removeEventListener("change", fn);
   }, []);
   return m;
+}
+
+const IS_TOUCH = window.matchMedia("(hover: none)").matches;
+
+// Freezes the page behind a modal. overflow:hidden alone isn't enough on
+// iOS Safari, so the body is pinned in place and the scroll restored after.
+function useBodyScrollLock(active) {
+  useEffect(() => {
+    if (!active) return;
+    const y = window.scrollY;
+    const s = document.body.style;
+    const prev = { position: s.position, top: s.top, left: s.left, right: s.right, width: s.width, overflow: s.overflow };
+    Object.assign(s, { position: "fixed", top: -y + "px", left: "0", right: "0", width: "100%", overflow: "hidden" });
+    return () => { Object.assign(s, prev); window.scrollTo(0, y); };
+  }, [active]);
 }
 
 function applyRealtime(setter) {
@@ -1555,6 +1605,7 @@ function Legend() {
 /* ── READ-ONLY ATTACHMENTS ──────────────────────────── */
 function ReadOnlyGallery({ images }) {
   const [lightbox, setLightbox] = useState(null);
+  useBodyScrollLock(!!lightbox);
   if (images.length === 0) return <div className="detail-section-empty">Nessuna immagine allegata</div>;
   return (
     <React.Fragment>
@@ -1827,6 +1878,7 @@ function CampaignModal({ initial, presetDate, editId, campaignImages, campaignLi
   const [stagedLinks, setStagedLinks] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  useBodyScrollLock(true);
 
   const stagedRef = useRef(stagedImages);
   useEffect(() => { stagedRef.current = stagedImages; }, [stagedImages]);
@@ -1874,9 +1926,9 @@ function CampaignModal({ initial, presetDate, editId, campaignImages, campaignLi
   const pd = form.date ? (() => { const p = parseIso(form.date); return new Date(p.y, p.m - 1, p.d); })() : TODAY;
 
   return (
-    <div className="overlay" onClick={saving ? undefined : onCancel}>
+    <div className="overlay sheet" onClick={saving ? undefined : onCancel}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header"><h2>{editId ? "Modifica Campagna" : "Nuova Campagna"}</h2></div>
+        <div className="modal-header"><h2>{editId ? "Modifica Campagna" : "Nuova Campagna"}</h2><button type="button" className="modal-close" onClick={onCancel} disabled={saving} aria-label="Chiudi">✕</button></div>
         <form onSubmit={submit}>
           <div className="modal-body">
             <div className="preview-box">
@@ -1892,7 +1944,7 @@ function CampaignModal({ initial, presetDate, editId, campaignImages, campaignLi
 
             <div className="form-group">
               <label className="form-label">Nome campagna *</label>
-              <input className="form-input" value={form.label} onChange={(e) => setText("label", e.target.value)} placeholder="es. Nuovi arrivi Alden — Uomo" autoFocus />
+              <input className="form-input" value={form.label} onChange={(e) => setText("label", e.target.value)} placeholder="es. Nuovi arrivi Alden — Uomo" autoFocus={!IS_TOUCH} />
               {isCreate && <div className="form-hint">Tipo e segmento vengono riconosciuti dal titolo (es. "nuovi arrivi", "back in stock", "uomo/donna"): puoi sempre cambiarli.</div>}
             </div>
 
@@ -2001,6 +2053,7 @@ function SocialModal({ initial, presetDate, editId, postImages, postLinks, campa
   const [stagedLinks, setStagedLinks] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  useBodyScrollLock(true);
 
   const stagedRef = useRef(stagedImages);
   useEffect(() => { stagedRef.current = stagedImages; }, [stagedImages]);
@@ -2031,14 +2084,14 @@ function SocialModal({ initial, presetDate, editId, postImages, postLinks, campa
   }
 
   return (
-    <div className="overlay" onClick={saving ? undefined : onCancel}>
+    <div className="overlay sheet" onClick={saving ? undefined : onCancel}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header"><h2>{editId ? "Modifica Contenuto" : "Nuovo Contenuto Social"}</h2></div>
+        <div className="modal-header"><h2>{editId ? "Modifica Contenuto" : "Nuovo Contenuto Social"}</h2><button type="button" className="modal-close" onClick={onCancel} disabled={saving} aria-label="Chiudi">✕</button></div>
         <form onSubmit={submit}>
           <div className="modal-body">
             <div className="form-group">
               <label className="form-label">Titolo / idea *</label>
-              <input className="form-input" value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="es. Reel lucidatura Alden con il Boot Black" autoFocus />
+              <input className="form-input" value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="es. Reel lucidatura Alden con il Boot Black" autoFocus={!IS_TOUCH} />
             </div>
             <div className="form-group form-row form-row-3">
               <div>
@@ -2246,6 +2299,7 @@ function ModalLinksSection({ links, placeholder, onAdd, onDelete }) {
 /* ── DELETE CONFIRM ─────────────────────────────────── */
 function ConfirmDeleteModal({ title, onCancel, onConfirm }) {
   const [busy, setBusy] = useState(false);
+  useBodyScrollLock(true);
   return (
     <div className="overlay" onClick={busy ? undefined : onCancel}>
       <div className="modal modal-sm" onClick={(e) => e.stopPropagation()}>
