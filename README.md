@@ -1,36 +1,44 @@
-# CappellettoShop — Calendario Campagne Email
+# CappellettoShop — Calendario Campagne
 
-Calendario campagne email per CappellettoShop, periodo agosto–dicembre 2026.
-Vista timeline + griglia, CRUD completo, filtri per tipo/stato, ricerca, sync real-time multi-utente via Supabase.
+Calendario delle campagne email CappellettoShop con sezione Social & Inspo per la SMM.
+Live: https://cappelletto-calendar.vercel.app
+
+## Sezioni
+
+- **Email** — Timeline (mese corrente in evidenza, linea "Oggi", settimane, mesi passati raccolti) e
+  Calendario mensile (drag & drop tra giorni, "+" per creare in un giorno). Filtri per stato, segmento e tipo.
+- **Social & Inspo** — bacheca Idea → Approvata → Da realizzare → Pubblicata, con immagini di riferimento,
+  link inspo/prodotti, formato, data di pubblicazione e collegamento opzionale a una campagna email.
 
 ## Stack
 
-- React (JSX) — nessun build step, compilato in-browser con Babel standalone
-- Supabase (Postgres + Realtime) per la persistenza e la sincronizzazione multi-utente
-- Deploy statico su Vercel — file singolo `index.html` in root
+- React (JSX) compilato in-browser con Babel standalone, file unico `index.html` — nessun build step
+- Supabase (Postgres + Realtime + Storage bucket `campaign-images`)
+- Deploy statico su Vercel
+
+## Dati
+
+- `campaigns`: `label`, `type`, `status`, `year`, `month`, `day`, `end_day`, `segment`, `notes`
+  - tipi: `launch`, `back_in_stock`, `brand`, `seasonal`, `promo`, `event`, `editorial`
+    (i vecchi `newsletter`/`automation` sono mappati su `seasonal`/`editorial`)
+  - stati: `tbd`, `planned`, `confirmed`, `sent`
+  - segmenti: `uomo`, `donna`, `entrambi`
+- `campaign_images` / `campaign_links` — allegati delle campagne
+- `social_posts`, `social_images`, `social_links` — sezione Social & Inspo
+
+Il frontend rileva lo schema al caricamento: funziona anche se una migrazione non è ancora applicata.
 
 ## Setup locale
 
 ```bash
-npx serve .
+npx serve -l 3057 .
 ```
 
-Apri `http://localhost:3000`.
+## Migrazioni
 
-## Backend
+In `supabase/migrations/`. Si applicano dal SQL Editor di Supabase oppure con un token via Management API.
+Le nuove tabelle richiedono `GRANT` espliciti ai ruoli `anon`/`authenticated` (non più esposte di default).
 
-Il progetto Supabase è collegato in `supabase/`. Per applicare le migration a un nuovo progetto:
+## Accesso
 
-```bash
-npx supabase link --project-ref <project-ref>
-npx supabase db push
-```
-
-Le credenziali (`SUPABASE_URL` / `SUPABASE_ANON_KEY`) sono impostate direttamente in `index.html`.
-
-## Struttura dati
-
-Tabella `campaigns`: `label`, `type`, `status`, `month` (8–12), `day`, `end_day` (opzionale), `notes`.
-
-Tipi campagna: Lancio Prodotto, Promozione/Sconto, Newsletter, Editoriale/Storytelling, Evento/Fiera, Automazione/Flow.
-Stati: Confermato, Pianificato, TBD.
+Nessun login: chi ha il link può leggere e modificare. Da valutare un login con ruoli prima di allargare l'accesso.
